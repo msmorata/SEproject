@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CCC Sentiment System - ABSA Dashboard</title>
+    <!-- Attempts CDN first; native canvas fallback activates if offline -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; background: #f4f6f9; }
+        .navbar { background: #007bff; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .logout-btn { color: white; text-decoration: none; font-weight: bold; background: #dc3545; padding: 8px 14px; border-radius: 4px; border: none; cursor: pointer; }
+        .container { padding: 25px 35px; }
+        .grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        textarea { width: 100%; height: 85px; margin: 8px 0; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; }
+        select { width: 100%; padding: 8px; margin-bottom: 8px; border-radius: 4px; border: 1px solid #ccc; }
+        button.action-btn { padding: 10px 18px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; color: white; }
+        .badge-Positive { background-color: #28a745; }
+        .badge-Negative { background-color: #dc3545; }
+        .badge-Neutral { background-color: #ffc107; color: #212529; }
+        
+        .aspect-item { background: #f8f9fa; border-left: 3px solid #007bff; padding: 6px 10px; margin-top: 5px; border-radius: 3px; font-size: 12px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 10px; border-bottom: 1px solid #e9ecef; text-align: left; font-size: 13px; vertical-align: top; }
+        th { background: #f8f9fa; color: #495057; }
+
+        #loader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.9); display: flex;
+            justify-content: center; align-items: center; z-index: 9999; flex-direction: column;
+        }
+        .spinner { border: 6px solid #f3f3f3; border-top: 6px solid #007bff; border-radius: 50%; width: 45px; height: 45px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5); display: none;
+            justify-content: center; align-items: center; z-index: 10000;
+        }
+        .modal-card { background: white; padding: 25px; border-radius: 8px; width: 300px; text-align: center; }
+        .modal-buttons { display: flex; justify-content: space-around; margin-top: 20px; }
+        .btn-confirm { background: #dc3545; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-cancel { background: #6c757d; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+
+        .legend { display: flex; justify-content: center; gap: 15px; margin-top: 10px; font-size: 12px; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-box { width: 12px; height: 12px; border-radius: 2px; }
+    </style>
+</head>
+<body>
+    <div id="loader">
+        <div class="spinner"></div>
+        <p style="margin-top: 15px;" id="loader-text">Loading Dashboard...</p>
+    </div>
+
+    <div id="logoutModal" class="modal-overlay">
+        <div class="modal-card">
+            <h4>Confirm Logout</h4>
+            <p>Are you sure you want to end your session?</p>
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeLogoutModal()">Cancel</button>
+                <button class="btn-confirm" onclick="confirmLogout()">Log Out</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="navbar">
+        <h2 style="margin: 0; font-size: 20px;">City College of Calamba - Sentiment Analytics</h2>
+        <div>
+            User: <strong>{{ username }}</strong> | 
+            <button class="logout-btn" onclick="openLogoutModal()">Logout</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="grid">
+            <div>
+                <div class="card">
+                    <h3 style="margin-top: 0;">Analyze Student Narrative (Taglish / English)</h3>
+                    <label style="font-size: 12px; font-weight: bold;">Department:</label>
+                    <select id="departmentSelect">
+                        <option value="Department of Computing and Informatics">Department of Computing and Informatics (DCI)</option>
+                        <option value="Department of Business and Accountancy">Department of Business and Accountancy (DBA)</option>
+                        <option value="Department of Arts, Sciences, and Teacher Education">Department of Arts, Sciences, and Teacher Education (DASTE)</option>
+                    </select>
+
+                    <textarea id="commentInput" placeholder="e.g., Mabait si sir pero masyadong mabilis magturo sa classroom..."></textarea>
+                    <button class="action-btn" onclick="submitFeedback()">Run BERT ABSA Pipeline</button>
+                    
+                    <div id="liveResult" style="display: none; margin-top: 15px; border-top: 1px solid #e9ecef; padding-top: 10px;">
+                        <h4 style="margin: 0 0 5px 0;">Analysis Output:</h4>
+                        <p id="resultSummary" style="margin: 0 0 10px 0;"></p>
+                        <div id="aspectContainer"></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-top: 0;">Recent Evaluated Narratives</h3>
+                    <div style="overflow-x: auto;">
+                        <table id="feedbackTable">
+                            <thead>
+                                <tr>
+                                    <th>Dept</th>
+                                    <th>Student Narrative</th>
+                                    <th>Overall</th>
+                                    <th>Aspect Diagnostics</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in logs %}
+                                <tr>
+                                    <td><small>{{ item.department }}</small></td>
+                                    <td>{{ item.raw_text }}</td>
+                                    <td><span class="badge badge-{{ item.sentiment }}">{{ item.sentiment }}</span></td>
+                                    <td>
+                                        {% for a in item.aspects %}
+                                        <div class="aspect-item">
+                                            <strong>{{ a.aspect }}:</strong> <span class="badge badge-{{ a.polarity }}">{{ a.polarity }}</span>
+                                            <br><em>"{{ a.clause }}"</em> — <small>{{ a.explanation }}</small>
+                                        </div>
+                                        {% endfor %}
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr id="noLogsRow"><td colspan="4" style="text-align: center;">No evaluations stored yet.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="card">
+                    <h3 style="margin-top: 0; text-align: center;">Sentiment Polarity Overview</h3>
+                    <div style="width: 260px; margin: 15px auto; text-align: center;">
+                        <canvas id="sentimentChart" 
+                                width="250" 
+                                height="250"
+                                data-pos="{{ pos | default(0) }}" 
+                                data-neg="{{ neg | default(0) }}" 
+                                data-neu="{{ neu | default(0) }}">
+                        </canvas>
+                        <div class="legend">
+                            <div class="legend-item"><div class="legend-box" style="background:#28a745;"></div> Pos</div>
+                            <div class="legend-item"><div class="legend-box" style="background:#dc3545;"></div> Neg</div>
+                            <div class="legend-item"><div class="legend-box" style="background:#ffc107;"></div> Neu</div>
+                        </div>
+                    </div>
+                    <div style="text-align: center; font-size: 13px; color: #555; margin-top: 10px;">
+                        Total Logged: <strong><span id="totalCount">{{ total | default(0) }}</span></strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.addEventListener('load', () => {
+            document.getElementById('loader').style.display = 'none';
+        });
+
+        function showLoader(text = "Loading...") {
+            document.getElementById('loader-text').innerText = text;
+            document.getElementById('loader').style.display = 'flex';
+        }
+
+        function openLogoutModal() { document.getElementById('logoutModal').style.display = 'flex'; }
+        function closeLogoutModal() { document.getElementById('logoutModal').style.display = 'none'; }
+        function confirmLogout() {
+            closeLogoutModal();
+            showLoader('Logging out...');
+            window.location.href = "{{ url_for('logout') }}";
+        }
+
+        const chartCanvas = document.getElementById('sentimentChart');
+        let posCount = parseInt(chartCanvas.getAttribute('data-pos'), 10) || 0;
+        let negCount = parseInt(chartCanvas.getAttribute('data-neg'), 10) || 0;
+        let neuCount = parseInt(chartCanvas.getAttribute('data-neu'), 10) || 0;
+
+        let chartInstance = null;
+
+        function renderChart() {
+            if (typeof Chart !== 'undefined') {
+                if (chartInstance) {
+                    chartInstance.data.datasets[0].data = [posCount, negCount, neuCount];
+                    chartInstance.update();
+                } else {
+                    const ctx = chartCanvas.getContext('2d');
+                    chartInstance = new Chart(ctx, {
+                        type: 'pie',
+                        data: {
+                            labels: ['Positive', 'Negative', 'Neutral'],
+                            datasets: [{
+                                data: [posCount, negCount, neuCount],
+                                backgroundColor: ['#28a745', '#dc3545', '#ffc107']
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: { legend: { display: false } }
+                        }
+                    });
+                }
+            } else {
+                // Standalone Offline Canvas Renderer (No CDN or external library needed)
+                const ctx = chartCanvas.getContext('2d');
+                const total = posCount + negCount + neuCount;
+                ctx.clearRect(0, 0, chartCanvas.width, chartCanvas.height);
+
+                if (total === 0) {
+                    ctx.beginPath();
+                    ctx.arc(125, 125, 100, 0, 2 * Math.PI);
+                    ctx.fillStyle = '#e9ecef';
+                    ctx.fill();
+                    return;
+                }
+
+                const slices = [
+                    { value: posCount, color: '#28a745' },
+                    { value: negCount, color: '#dc3545' },
+                    { value: neuCount, color: '#ffc107' }
+                ];
+
+                let currentAngle = -0.5 * Math.PI;
+                for (const slice of slices) {
+                    const sliceAngle = (slice.value / total) * 2 * Math.PI;
+                    if (sliceAngle > 0) {
+                        ctx.beginPath();
+                        ctx.moveTo(125, 125);
+                        ctx.arc(125, 125, 100, currentAngle, currentAngle + sliceAngle);
+                        ctx.closePath();
+                        ctx.fillStyle = slice.color;
+                        ctx.fill();
+                        currentAngle += sliceAngle;
+                    }
+                }
+            }
+        }
+
+        renderChart();
+
+        async function submitFeedback() {
+            const comment = document.getElementById('commentInput').value.trim();
+            const department = document.getElementById('departmentSelect').value;
+            if (!comment) return;
+
+            showLoader("Running BERT & Aspect Segmentation...");
+
+            try {
+                const response = await fetch("{{ url_for('analyze_api') }}", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ comment: comment, department: department })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    if (data.sentiment === 'Positive') posCount++;
+                    else if (data.sentiment === 'Negative') negCount++;
+                    else neuCount++;
+
+                    renderChart();
+                    document.getElementById('totalCount').innerText = posCount + negCount + neuCount;
+
+                    document.getElementById('liveResult').style.display = 'block';
+                    document.getElementById('resultSummary').innerHTML = 
+                        `Overall Polarity: <span class="badge badge-${data.sentiment}">${data.sentiment}</span> (Mean Confidence: ${(data.confidence_score * 100).toFixed(2)}%)`;
+
+                    let aspectHTML = "";
+                    data.aspect_breakdown.forEach(item => {
+                        aspectHTML += `
+                            <div class="aspect-item">
+                                <strong>${item.aspect}:</strong> <span class="badge badge-${item.polarity}">${item.polarity}</span><br>
+                                <em>"${item.clause}"</em> — <small>${item.explanation}</small>
+                            </div>
+                        `;
+                    });
+                    document.getElementById('aspectContainer').innerHTML = aspectHTML;
+
+                    const tableBody = document.querySelector('#feedbackTable tbody');
+                    const noLogsRow = document.getElementById('noLogsRow');
+                    if (noLogsRow) noLogsRow.remove();
+
+                    const newRow = document.createElement('tr');
+                    newRow.innerHTML = `
+                        <td><small>${data.department}</small></td>
+                        <td>${data.raw}</td>
+                        <td><span class="badge badge-${data.sentiment}">${data.sentiment}</span></td>
+                        <td>${aspectHTML}</td>
+                    `;
+                    tableBody.insertBefore(newRow, tableBody.firstChild);
+                    document.getElementById('commentInput').value = "";
+                } else {
+                    alert(data.error || "Analysis failed.");
+                }
+            } catch (err) {
+                alert("Server communication error.");
+            } finally {
+                document.getElementById('loader').style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
