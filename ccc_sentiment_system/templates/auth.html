@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Institutional Authentication — CCC Sentiment System</title>
+    <style>
+        :root {
+            --bg-canvas: #0b1329;
+            --surface-card: #131f37;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --accent-green: #10b981;
+            --accent-green-hover: #059669;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-light: rgba(255, 255, 255, 0.08);
+            --transition-smooth: all 0.65s cubic-bezier(0.77, 0, 0.175, 1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        
+        body {
+            background: var(--bg-canvas); min-height: 100vh; display: flex; align-items: center;
+            justify-content: center; padding: 20px; overflow-x: hidden;
+        }
+
+        .auth-wrapper {
+            position: relative; width: 100%; max-width: 960px; min-height: 580px;
+            background: var(--surface-card); border-radius: 24px; overflow: hidden;
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7); border: 1px solid var(--border-light);
+        }
+
+        /* Form Containers */
+        .form-container {
+            position: absolute; top: 0; height: 100%; width: 50%;
+            display: flex; flex-direction: column; justify-content: center;
+            padding: 40px 45px; transition: var(--transition-smooth);
+            background: var(--surface-card); z-index: 1;
+        }
+
+        .sign-in-container { left: 0; z-index: 2; opacity: 1; }
+        .sign-up-container { left: 0; z-index: 1; opacity: 0; }
+
+        .auth-wrapper.right-panel-active .sign-in-container {
+            transform: translateX(100%); opacity: 0; pointer-events: none; z-index: 1;
+        }
+
+        .auth-wrapper.right-panel-active .sign-up-container {
+            transform: translateX(100%); opacity: 1; z-index: 5; pointer-events: all;
+        }
+
+        .form-title { font-size: 1.65rem; font-weight: 800; color: var(--text-main); margin-bottom: 6px; }
+        .form-subtitle { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 24px; }
+
+        .field-group { margin-bottom: 18px; text-align: left; }
+        .field-label { 
+            display: block; font-size: 0.72rem; font-weight: 700; color: var(--text-muted); 
+            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; 
+        }
+        .input-control {
+            width: 100%; padding: 12px 16px; background: #0b1329; border: 1.5px solid var(--border-light);
+            border-radius: 10px; font-size: 0.92rem; color: var(--text-main); outline: none; transition: 0.2s ease;
+        }
+        .input-control:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25); background: #0f1a36; }
+
+        .btn-action {
+            width: 100%; padding: 13px; background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white; border: none; border-radius: 10px; font-size: 0.92rem; font-weight: 600;
+            cursor: pointer; transition: transform 0.2s ease, filter 0.2s ease; margin-top: 8px;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.35);
+        }
+        .btn-action-green {
+            background: linear-gradient(135deg, #10b981, #059669);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);
+        }
+        .btn-action:hover { transform: translateY(-1px); filter: brightness(1.1); }
+        .btn-action:active { transform: translateY(0); }
+
+        /* Sliding Decorative Overlay */
+        .overlay-container {
+            position: absolute; top: 0; left: 50%; width: 50%; height: 100%;
+            overflow: hidden; transition: var(--transition-smooth); z-index: 100;
+        }
+
+        .auth-wrapper.right-panel-active .overlay-container {
+            transform: translateX(-100%);
+        }
+
+        .overlay {
+            background: linear-gradient(135deg, #0b1f4d 0%, #1e3a8a 50%, #064e3b 100%);
+            position: relative; left: -100%; height: 100%; width: 200%;
+            transform: translateX(0); transition: var(--transition-smooth);
+        }
+
+        .auth-wrapper.right-panel-active .overlay {
+            transform: translateX(50%);
+        }
+
+        .overlay-panel {
+            position: absolute; top: 0; height: 100%; width: 50%;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 0 45px; text-align: center; color: white;
+            transition: var(--transition-smooth);
+        }
+
+        /* Fixed coordinate pinning to prevent text truncation */
+        .overlay-left {
+            left: 0;
+            transform: translateX(-20%);
+        }
+        .auth-wrapper.right-panel-active .overlay-left {
+            transform: translateX(0);
+        }
+
+        .overlay-right {
+            right: 0;
+            transform: translateX(0);
+        }
+        .auth-wrapper.right-panel-active .overlay-right {
+            transform: translateX(20%);
+        }
+
+        .overlay-title { font-size: 1.85rem; font-weight: 800; line-height: 1.25; margin-bottom: 12px; }
+        .overlay-desc { font-size: 0.88rem; color: #cbd5e1; line-height: 1.6; margin-bottom: 24px; max-width: 320px; }
+
+        .btn-ghost {
+            background: rgba(255, 255, 255, 0.1); border: 1.5px solid rgba(255, 255, 255, 0.4);
+            color: white; padding: 11px 30px; border-radius: 9999px; font-size: 0.88rem; font-weight: 600;
+            cursor: pointer; transition: 0.2s ease; backdrop-filter: blur(5px);
+        }
+        .btn-ghost:hover { background: white; color: #0b1329; border-color: white; }
+
+        .brand-pill {
+            display: inline-flex; align-items: center; gap: 8px; background: rgba(255, 255, 255, 0.12);
+            padding: 5px 14px; border-radius: 9999px; font-size: 0.72rem; font-weight: 700;
+            letter-spacing: 0.5px; border: 1px solid rgba(255, 255, 255, 0.2); text-transform: uppercase;
+            margin-bottom: 16px;
+        }
+
+        .alert-error {
+            padding: 10px 14px; border-radius: 8px; font-size: 0.82rem; margin-bottom: 16px;
+            background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.3); color: #fb7185;
+        }
+        .alert-flash {
+            padding: 10px 14px; border-radius: 8px; font-size: 0.82rem; margin-bottom: 16px;
+            background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399;
+        }
+
+        /* Mobile View: Fallback Stack */
+        @media (max-width: 768px) {
+            .auth-wrapper { min-height: 580px; }
+            .overlay-container { display: none; }
+            .form-container { width: 100%; padding: 35px 25px; }
+            .sign-up-container { display: none; }
+            .auth-wrapper.right-panel-active .sign-in-container { display: none; }
+            .auth-wrapper.right-panel-active .sign-up-container {
+                display: flex; transform: none; opacity: 1;
+            }
+            .mobile-toggle { display: block !important; margin-top: 18px; text-align: center; font-size: 0.85rem; color: var(--text-muted); }
+            .mobile-toggle span { color: var(--primary); font-weight: 700; cursor: pointer; }
+        }
+        .mobile-toggle { display: none; }
+    </style>
+</head>
+<body>
+    <div class="auth-wrapper {% if mode == 'signup' %}right-panel-active{% endif %}" id="authWrapper">
+        
+        <!-- Registration Form -->
+        <div class="form-container sign-up-container">
+            <form method="POST" action="{{ url_for('signup') }}">
+                <h2 class="form-title">Create Account</h2>
+                <p class="form-subtitle">Enroll as an authorized evaluator</p>
+
+                {% if error and mode == 'signup' %}
+                    <div class="alert-error">{{ error }}</div>
+                {% endif %}
+
+                <div class="field-group">
+                    <label class="field-label">Evaluator Username</label>
+                    <input type="text" name="username" class="input-control" placeholder="e.g., dci_chair" required autocomplete="off">
+                </div>
+                <div class="field-group">
+                    <label class="field-label">Secure Password</label>
+                    <input type="password" name="password" class="input-control" placeholder="Minimum 6 characters" required>
+                </div>
+                <button type="submit" class="btn-action btn-action-green">Register Credentials</button>
+
+                <div class="mobile-toggle">
+                    Already registered? <span onclick="togglePanels(false)">Sign In</span>
+                </div>
+            </form>
+        </div>
+
+        <!-- Login Form -->
+        <div class="form-container sign-in-container">
+            <form method="POST" action="{{ url_for('login') }}">
+                <h2 class="form-title">Welcome Back</h2>
+                <p class="form-subtitle">Access your evaluation dashboard</p>
+
+                {% with messages = get_flashed_messages() %}
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert-flash">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                {% if error and mode != 'signup' %}
+                    <div class="alert-error">{{ error }}</div>
+                {% endif %}
+
+                <div class="field-group">
+                    <label class="field-label">Account Identifier</label>
+                    <input type="text" name="username" class="input-control" placeholder="e.g., admin_eval" required autocomplete="off">
+                </div>
+                <div class="field-group">
+                    <label class="field-label">Password</label>
+                    <input type="password" name="password" class="input-control" placeholder="••••••••••••" required>
+                </div>
+                <button type="submit" class="btn-action">Sign In to Dashboard</button>
+
+                <div class="mobile-toggle">
+                    Need an account? <span onclick="togglePanels(true)">Sign Up</span>
+                </div>
+            </form>
+        </div>
+
+        <!-- Sliding Gradient Overlay -->
+        <div class="overlay-container">
+            <div class="overlay">
+                <!-- Left Overlay (Visible on Sign Up view) -->
+                <div class="overlay-panel overlay-left">
+                    <span class="brand-pill">City College of Calamba</span>
+                    <h2 class="overlay-title">Already Registered?</h2>
+                    <p class="overlay-desc">Switch back to sign in to access sentiment diagnostic runs and departmental KPI breakdowns.</p>
+                    <button class="btn-ghost" onclick="togglePanels(false)">Sign In Instead</button>
+                </div>
+
+                <!-- Right Overlay (Visible on Sign In view) -->
+                <div class="overlay-panel overlay-right">
+                    <span class="brand-pill">Sentiment Analytics</span>
+                    <h2 class="overlay-title">New Evaluator?</h2>
+                    <p class="overlay-desc">Create your institutional account to begin processing qualitative Taglish student feedback with BERT.</p>
+                    <button class="btn-ghost" onclick="togglePanels(true)">Create Account</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const wrapper = document.getElementById('authWrapper');
+
+        function togglePanels(isSignUp) {
+            if (isSignUp) {
+                wrapper.classList.add('right-panel-active');
+            } else {
+                wrapper.classList.remove('right-panel-active');
+            }
+        }
+    </script>
+</body>
+</html>
