@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Institutional ABSA Portal — City College of Calamba</title>
+    <script src="{{ url_for('static', filename='chart.min.js') }}"></script>
+    <style>
+        :root {
+            --surface-ground: #0b1329;
+            --surface-card: #131f37;
+            --surface-card-hover: #1c2b4a;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --text-title: #f8fafc;
+            --text-body: #cbd5e1;
+            --text-muted: #94a3b8;
+            --border-light: rgba(255, 255, 255, 0.08);
+            --badge-pos: #10b981;
+            --badge-pos-bg: rgba(16, 185, 129, 0.15);
+            --badge-neg: #f43f5e;
+            --badge-neg-bg: rgba(244, 63, 94, 0.15);
+            --badge-neu: #f59e0b;
+            --badge-neu-bg: rgba(245, 158, 11, 0.15);
+            --radius-md: 12px;
+            --radius-lg: 18px;
+            --transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        body { background: var(--surface-ground); color: var(--text-body); min-height: 100vh; overflow-x: hidden; }
+
+        /* Fullscreen Interactive Loader Overlay */
+        .loader-overlay {
+            position: fixed; inset: 0; background: rgba(11, 19, 41, 0.85); backdrop-filter: blur(8px);
+            display: none; justify-content: center; align-items: center; z-index: 9999; flex-direction: column;
+        }
+        .spinner {
+            width: 48px; height: 48px; border: 4px solid rgba(255,255,255,0.15);
+            border-top: 4px solid var(--primary); border-radius: 50%;
+            animation: spin 0.8s linear infinite; box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* Topbar Navigation */
+        .topbar {
+            background: rgba(19, 31, 55, 0.85); backdrop-filter: blur(12px);
+            height: 72px; border-bottom: 1px solid var(--border-light);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 clamp(16px, 4vw, 40px); position: sticky; top: 0; z-index: 100;
+        }
+        .brand-unit { display: flex; align-items: center; gap: 12px; }
+        .brand-logo {
+            width: 40px; height: 40px; background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            border-radius: 10px; display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 800; font-size: 1.15rem; box-shadow: 0 0 15px rgba(59, 130, 246, 0.35);
+        }
+        .brand-title { font-size: 1.05rem; font-weight: 700; color: var(--text-title); }
+        .brand-subtitle { font-size: 0.72rem; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .nav-actions { display: flex; align-items: center; gap: 12px; }
+        .btn-nav {
+            background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-light);
+            color: var(--text-title); padding: 7px 14px; border-radius: 8px; font-size: 0.82rem;
+            font-weight: 600; cursor: pointer; transition: var(--transition); display: inline-flex; align-items: center; gap: 6px;
+        }
+        .btn-nav:hover { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.2); }
+        .btn-logout { background: rgba(244, 63, 94, 0.1); border-color: rgba(244, 63, 94, 0.25); color: #fb7185; }
+        .btn-logout:hover { background: rgba(244, 63, 94, 0.2); }
+
+        /* Workspace */
+        .workspace { max-width: 1440px; margin: 0 auto; padding: clamp(16px, 3vw, 32px); }
+
+        /* Department Filter Pills */
+        .dept-filter-bar {
+            display: flex; align-items: center; gap: 8px; margin-bottom: 24px; overflow-x: auto; padding-bottom: 4px;
+        }
+        .dept-tab {
+            padding: 9px 18px; border-radius: 10px; font-size: 0.84rem; font-weight: 600;
+            background: var(--surface-card); border: 1px solid var(--border-light);
+            color: var(--text-muted); cursor: pointer; transition: var(--transition); white-space: nowrap;
+        }
+        .dept-tab:hover { color: var(--text-title); border-color: rgba(255, 255, 255, 0.2); }
+        .dept-tab.active {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white; border-color: transparent; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+        }
+
+        /* KPI Cards */
+        .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .kpi-card {
+            background: var(--surface-card); border: 1px solid var(--border-light); border-radius: var(--radius-md);
+            padding: 20px; position: relative; overflow: hidden; transition: var(--transition);
+        }
+        .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--accent); }
+        .kpi-card:hover { transform: translateY(-2px); background: var(--surface-card-hover); }
+        .kpi-header { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .kpi-value { font-size: 2.2rem; font-weight: 800; color: var(--text-title); margin: 8px 0 4px 0; }
+        .kpi-sub { font-size: 0.78rem; font-weight: 500; color: var(--text-muted); }
+
+        /* Prescriptive Alerts Container */
+        .alert-panel {
+            background: rgba(30, 41, 69, 0.6); border: 1px solid rgba(59, 130, 246, 0.25);
+            border-radius: var(--radius-md); padding: 18px 24px; margin-bottom: 24px;
+        }
+        .alert-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .alert-tag { font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 9999px; text-transform: uppercase; }
+        .alert-tag-critical { background: rgba(244, 63, 94, 0.2); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.4); }
+        .alert-tag-stable { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+        .alert-text { font-size: 0.9rem; line-height: 1.5; color: var(--text-title); }
+
+        /* Main Workspace Grid */
+        .main-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 20px; margin-bottom: 24px; }
+        .panel {
+            background: var(--surface-card); border: 1px solid var(--border-light); border-radius: var(--radius-lg);
+            padding: clamp(18px, 2.5vw, 24px); display: flex; flex-direction: column;
+        }
+        .panel-heading {
+            font-size: 1.05rem; font-weight: 700; color: var(--text-title); margin-bottom: 16px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        /* Form Inputs */
+        .select-input, .textarea-input {
+            width: 100%; background: #090e1a; border: 1px solid var(--border-light); border-radius: 10px;
+            color: var(--text-title); font-size: 0.9rem; transition: var(--transition); outline: none;
+        }
+        .select-input { padding: 11px 14px; margin-bottom: 14px; }
+        .textarea-input { height: 95px; padding: 12px; resize: none; margin-bottom: 14px; line-height: 1.5; }
+        .select-input:focus, .textarea-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25); }
+
+        .btn-action {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 12px 20px; background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white; border: none; border-radius: 10px; font-size: 0.88rem; font-weight: 600;
+            cursor: pointer; transition: var(--transition);
+        }
+        .btn-action:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+        /* Charts Section */
+        .charts-double { display: grid; grid-template-columns: 1fr 1.3fr; gap: 16px; }
+        .chart-box { position: relative; width: 100%; height: 210px; }
+
+        /* Table */
+        .table-responsive { width: 100%; overflow-x: auto; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th {
+            background: rgba(9, 14, 26, 0.5); color: var(--text-muted); font-size: 0.72rem;
+            font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 12px 16px;
+            border-bottom: 1px solid var(--border-light);
+        }
+        td { padding: 14px 16px; border-bottom: 1px solid var(--border-light); font-size: 0.86rem; vertical-align: top; }
+        tbody tr:hover { background: rgba(255, 255, 255, 0.02); }
+
+        /* Badges */
+        .badge { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 9999px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; }
+        .badge-Positive { background: var(--badge-pos-bg); color: var(--badge-pos); }
+        .badge-Negative { background: var(--badge-neg-bg); color: var(--badge-neg); }
+        .badge-Neutral { background: var(--badge-neu-bg); color: var(--badge-neu); }
+
+        /* Modals & Dialogs */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(9, 14, 26, 0.8); backdrop-filter: blur(6px);
+            display: none; align-items: center; justify-content: center; z-index: 999;
+        }
+        .modal-card {
+            background: var(--surface-card); border: 1px solid var(--border-light); border-radius: var(--radius-lg);
+            width: min(92%, 560px); max-height: 85vh; overflow-y: auto; padding: 28px;
+        }
+        .modal-sheet {
+            background: var(--surface-card); border: 1px solid var(--border-light); border-radius: var(--radius-lg);
+            width: min(90%, 380px); padding: 28px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+        }
+
+        #toast {
+            position: fixed; bottom: 24px; right: 24px; background: #1e293b; color: #fff;
+            padding: 12px 20px; border-radius: 10px; font-size: 0.88rem; display: none;
+            border: 1px solid var(--border-light); box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 1000;
+        }
+
+        @media(max-width: 1024px) {
+            .main-grid { grid-template-columns: 1fr; }
+            .charts-double { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div id="toast"></div>
+
+    <!-- Fullscreen Loading Spinner Overlay -->
+    <div id="loader" class="loader-overlay">
+        <div class="spinner"></div>
+        <p id="loaderText" style="margin-top: 16px; color: #f8fafc; font-weight: 500; font-size: 0.92rem;">Processing ABSA Pipeline...</p>
+    </div>
+
+    <!-- Logout Confirmation Modal -->
+    <div id="logoutModal" class="modal-overlay">
+        <div class="modal-sheet">
+            <h4 style="color: var(--text-title); font-size: 1.15rem; margin-bottom: 8px;">End Active Session?</h4>
+            <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 22px;">Are you sure you want to log out of the institutional evaluation portal?</p>
+            <div style="display: flex; gap: 12px;">
+                <button class="btn-nav" style="flex: 1; justify-content: center;" onclick="closeLogoutModal()">Cancel</button>
+                <button class="btn-action" style="flex: 1; justify-content: center; background: #f43f5e;" onclick="confirmLogout()">Confirm Sign Out</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Batch CSV Modal -->
+    <div id="csvModal" class="modal-overlay">
+        <div class="modal-card">
+            <h3 style="color:var(--text-title); margin-bottom: 8px;">Batch Evaluation CSV Ingestion</h3>
+            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom: 20px;">Upload semester student narratives. The parser auto-detects 'feedback', 'comment', or the first text column.</p>
+            
+            <label class="field-label" style="display:block; margin-bottom:6px; font-size:0.75rem; color:var(--text-muted);">Default Academic Routing</label>
+            <select id="csvDept" class="select-input">
+                <option value="DCI">Department of Computing and Informatics (DCI)</option>
+                <option value="DBA">Department of Business and Accountancy (DBA)</option>
+                <option value="DTE">Department of Teacher Education (DTE)</option>
+                <option value="DAS">Department of Arts and Sciences (DAS)</option>
+            </select>
+
+            <input type="file" id="csvFileInput" accept=".csv" style="margin: 12px 0 20px 0; color:var(--text-body);">
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="btn-nav" onclick="closeCsvModal()">Cancel</button>
+                <button class="btn-action" onclick="submitCsv()">Execute Ingestion</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slang Manager Modal -->
+    <div id="lexiconModal" class="modal-overlay">
+        <div class="modal-card" style="width: min(92%, 680px);">
+            <h3 style="color:var(--text-title); margin-bottom: 6px;">Dynamic Taglish Slang Manager</h3>
+            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom: 18px;">Register and tune emerging campus vernacular without re-deploying code.</p>
+
+            <div style="display: grid; grid-template-columns: 2fr 1.5fr 1fr; gap: 10px; margin-bottom: 16px;">
+                <input type="text" id="newWord" placeholder="e.g., goods, petiks, sabaw" class="select-input" style="margin-bottom:0;">
+                <select id="newCategory" class="select-input" style="margin-bottom:0;">
+                    <option value="positive">Positive Term</option>
+                    <option value="negative">Negative Term</option>
+                    <option value="intensifiers">Intensifier</option>
+                    <option value="negations">Negation</option>
+                </select>
+                <button class="btn-action" onclick="addLexiconTerm()">Add Term</button>
+            </div>
+
+            <div style="max-height: 280px; overflow-y: auto; border: 1px solid var(--border-light); border-radius: 8px;">
+                <table style="width: 100%;">
+                    <thead>
+                        <tr><th>Term</th><th>Category</th><th>Action</th></tr>
+                    </thead>
+                    <tbody id="lexiconTableBody"></tbody>
+                </table>
+            </div>
+
+            <div style="text-align: right; margin-top: 18px;">
+                <button class="btn-nav" onclick="closeLexiconModal()">Close Manager</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Navigation -->
+    <header class="topbar">
+        <div class="brand-unit">
+            <div class="brand-logo">CCC</div>
+            <div>
+                <div class="brand-title">Sentiment Evaluation System</div>
+                <div class="brand-subtitle">Multilingual ABSA Decision Portal</div>
+            </div>
+        </div>
+        <div class="nav-actions">
+            <button class="btn-nav" onclick="openCsvModal()">Batch CSV</button>
+            <button class="btn-nav" onclick="exportCurrentCsv()">Export CSV</button>
+            <button class="btn-nav" onclick="openLexiconModal()">Slang Manager</button>
+            <span style="font-size:0.82rem; color:var(--text-muted); margin: 0 4px;">|</span>
+            <span style="font-size:0.86rem; font-weight:600; color:var(--text-title);">{{ username }}</span>
+            <button class="btn-nav btn-logout" onclick="openLogoutModal()">Sign Out</button>
+        </div>
+    </header>
+
+    <main class="workspace">
+        <!-- Department Tabs -->
+        <div class="dept-filter-bar">
+            <button class="dept-tab active" onclick="switchDepartment('ALL', this)">All Departments</button>
+            <button class="dept-tab" onclick="switchDepartment('DCI', this)">Dept of Computing & Informatics (DCI)</button>
+            <button class="dept-tab" onclick="switchDepartment('DBA', this)">Dept of Business & Accountancy (DBA)</button>
+            <button class="dept-tab" onclick="switchDepartment('DTE', this)">Dept of Teacher Education (DTE)</button>
+            <button class="dept-tab" onclick="switchDepartment('DAS', this)">Dept of Arts & Sciences (DAS)</button>
+        </div>
+
+        <!-- Prescriptive Analytics Alert -->
+        <div class="alert-panel" id="prescriptiveBox">
+            <div class="alert-header">
+                <strong style="color:var(--text-title); font-size:0.92rem;">Prescriptive Quality Assurance Advisory</strong>
+                <span class="alert-tag alert-tag-stable" id="prescriptiveTag">Baseline</span>
+            </div>
+            <div class="alert-text" id="prescriptiveText">Loading prescriptive diagnostics...</div>
+        </div>
+
+        <!-- KPI Metrics -->
+        <section class="kpi-row">
+            <div class="kpi-card" style="--accent: var(--primary);">
+                <div class="kpi-header">Total Evaluated</div>
+                <div class="kpi-value" id="kpi-total">0</div>
+                <div class="kpi-sub">Total student comments logged</div>
+            </div>
+            <div class="kpi-card" style="--accent: var(--badge-pos);">
+                <div class="kpi-header">Positive Polarity</div>
+                <div class="kpi-value" style="color:var(--badge-pos);" id="kpi-pos">0</div>
+                <div class="kpi-sub">Commendations & approval</div>
+            </div>
+            <div class="kpi-card" style="--accent: var(--badge-neg);">
+                <div class="kpi-header">Negative Polarity</div>
+                <div class="kpi-value" style="color:var(--badge-neg);" id="kpi-neg">0</div>
+                <div class="kpi-sub">Actionable grievances logged</div>
+            </div>
+            <div class="kpi-card" style="--accent: var(--badge-neu);">
+                <div class="kpi-header">Neutral Feedback</div>
+                <div class="kpi-value" style="color:var(--badge-neu);" id="kpi-neu">0</div>
+                <div class="kpi-sub">Descriptive remarks</div>
+            </div>
+        </section>
+
+        <!-- Evaluation Console + Scorecards -->
+        <div class="main-grid">
+            <section class="panel">
+                <div class="panel-heading">
+                    <span>Evaluate Narrative</span>
+                    <span style="font-size:0.75rem; color:var(--text-muted);">BERT Multilingual ABSA</span>
+                </div>
+
+                <select id="singleDept" class="select-input">
+                    <option value="DCI">Department of Computing and Informatics (DCI)</option>
+                    <option value="DBA">Department of Business and Accountancy (DBA)</option>
+                    <option value="DTE">Department of Teacher Education (DTE)</option>
+                    <option value="DAS">Department of Arts and Sciences (DAS)</option>
+                </select>
+
+                <textarea id="singleComment" class="textarea-input" placeholder="e.g., Mabait si sir magturo kaso sobrang init sa classroom at maingay ang electric fan..."></textarea>
+
+                <button class="btn-action" onclick="submitSingleFeedback()">Execute ABSA Pipeline</button>
+            </section>
+
+            <section class="panel">
+                <div class="panel-heading">
+                    <span>Multi-Dimensional Scorecard</span>
+                    <span style="font-size:0.75rem; color:var(--text-muted);" id="currentDeptLabel">ALL DEPARTMENTS</span>
+                </div>
+                <div class="charts-double">
+                    <div class="chart-box">
+                        <canvas id="doughnutChart"></canvas>
+                    </div>
+                    <div class="chart-box">
+                        <canvas id="aspectBarChart"></canvas>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Data Logs -->
+        <section class="panel">
+            <div class="panel-heading">
+                <span>Recent Diagnostic Records</span>
+                <span style="font-size:0.75rem; color:var(--text-muted);">Direct PostgreSQL Persistence</span>
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:12%;">Department</th>
+                            <th style="width:38%;">Student Narrative</th>
+                            <th style="width:12%;">Polarity</th>
+                            <th style="width:38%;">Disaggregated Clause Breakdown</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logsTableBody"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        let currentDepartment = 'ALL';
+        let doughnutChart = null;
+        let aspectBarChart = null;
+
+        // Loader Helpers
+        function showLoader(message = "Processing ABSA Pipeline...") {
+            document.getElementById('loaderText').innerText = message;
+            document.getElementById('loader').style.display = 'flex';
+        }
+        function hideLoader() {
+            document.getElementById('loader').style.display = 'none';
+        }
+
+        // Logout Confirmation Controls
+        function openLogoutModal() { document.getElementById('logoutModal').style.display = 'flex'; }
+        function closeLogoutModal() { document.getElementById('logoutModal').style.display = 'none'; }
+        function confirmLogout() {
+            closeLogoutModal();
+            showLoader("Terminating session and signing out...");
+            window.location.href = "{{ url_for('logout') }}";
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.style.display = 'block';
+            setTimeout(() => { t.style.display = 'none'; }, 3500);
+        }
+
+        function switchDepartment(dept, btn) {
+            currentDepartment = dept;
+            document.querySelectorAll('.dept-tab').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('currentDeptLabel').innerText = dept + " METRICS";
+            fetchAnalytics();
+        }
+
+        async function fetchAnalytics() {
+            try {
+                const res = await fetch(`/api/analytics?department=${currentDepartment}`);
+                const data = await res.json();
+
+                // Update KPIs
+                document.getElementById('kpi-total').innerText = data.kpis.total;
+                document.getElementById('kpi-pos').innerText = data.kpis.pos;
+                document.getElementById('kpi-neg').innerText = data.kpis.neg;
+                document.getElementById('kpi-neu').innerText = data.kpis.neu;
+
+                // Update Prescriptive Advice
+                const pTag = document.getElementById('prescriptiveTag');
+                const pText = document.getElementById('prescriptiveText');
+                if (data.insights && data.insights.length > 0) {
+                    const top = data.insights[0];
+                    pTag.innerText = top.level;
+                    pTag.className = 'alert-tag ' + (top.level.includes('Alert') || top.level.includes('Warning') ? 'alert-tag-critical' : 'alert-tag-stable');
+                    pText.innerHTML = `<strong>${top.aspect}:</strong> ${top.recommendation}`;
+                }
+
+                // Render Doughnut Chart
+                renderDoughnut(data.kpis.pos, data.kpis.neg, data.kpis.neu);
+
+                // Render Aspect Bar Chart
+                renderAspectBar(data.aspect_breakdown);
+
+                // Render Table Logs
+                renderLogs(data.logs);
+            } catch (err) {
+                console.error("Failed to load analytics:", err);
+            }
+        }
+
+        function renderDoughnut(pos, neg, neu) {
+            const ctx = document.getElementById('doughnutChart').getContext('2d');
+            if (doughnutChart) doughnutChart.destroy();
+            doughnutChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Positive', 'Negative', 'Neutral'],
+                    datasets: [{
+                        data: [pos, neg, neu],
+                        backgroundColor: ['#10b981', '#f43f5e', '#f59e0b'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    cutout: '70%',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function renderAspectBar(aspects) {
+            const ctx = document.getElementById('aspectBarChart').getContext('2d');
+            if (aspectBarChart) aspectBarChart.destroy();
+            aspectBarChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Pedagogy', 'Demeanor', 'Facilities'],
+                    datasets: [
+                        { label: 'Pos', data: [aspects['Instructional Delivery'].pos, aspects['Faculty Demeanor'].pos, aspects['Facilities'].pos], backgroundColor: '#10b981' },
+                        { label: 'Neg', data: [aspects['Instructional Delivery'].neg, aspects['Faculty Demeanor'].neg, aspects['Facilities'].neg], backgroundColor: '#f43f5e' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { stacked: true, ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { display: false } },
+                        y: { stacked: true, ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function renderLogs(logs) {
+            const tbody = document.getElementById('logsTableBody');
+            tbody.innerHTML = '';
+            if (!logs || logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:30px;">No records available for this department.</td></tr>';
+                return;
+            }
+            logs.forEach(item => {
+                let aspectsHTML = '';
+                item.aspects.forEach(a => {
+                    aspectsHTML += `
+                        <div style="background:rgba(255,255,255,0.03); border-left:3px solid #3b82f6; padding:6px 10px; margin-bottom:4px; border-radius:4px;">
+                            <strong>${a.aspect}:</strong> <span class="badge badge-${a.polarity}">${a.polarity}</span>
+                            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">"${a.clause}"</div>
+                        </div>
+                    `;
+                });
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong style="color:var(--text-title);">${item.department}</strong></td>
+                    <td style="color:var(--text-body);">"${item.raw_text}"</td>
+                    <td><span class="badge badge-${item.sentiment}">${item.sentiment}</span></td>
+                    <td>${aspectsHTML}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function submitSingleFeedback() {
+            const comment = document.getElementById('singleComment').value.trim();
+            const department = document.getElementById('singleDept').value;
+            if (!comment) return showToast("Please input a narrative first.");
+
+            showLoader("Decomposing Narrative with BERT & Lexicon...");
+
+            try {
+                const res = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ comment, department })
+                });
+                if (res.ok) {
+                    document.getElementById('singleComment').value = '';
+                    showToast("Feedback evaluated and stored.");
+                    fetchAnalytics();
+                } else {
+                    showToast("Analysis failed.");
+                }
+            } catch (e) {
+                showToast("Server communication error.");
+            } finally {
+                hideLoader();
+            }
+        }
+
+        // CSV Modal Controls
+        function openCsvModal() { document.getElementById('csvModal').style.display = 'flex'; }
+        function closeCsvModal() { document.getElementById('csvModal').style.display = 'none'; }
+        async function submitCsv() {
+            const fileInput = document.getElementById('csvFileInput');
+            const dept = document.getElementById('csvDept').value;
+            if (!fileInput.files.length) return showToast("Please choose a CSV file.");
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('department', dept);
+
+            closeCsvModal();
+            showLoader("Ingesting batch CSV records through BERT model...");
+
+            try {
+                const res = await fetch('/api/upload_csv', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(`Batch completed! Processed ${data.processed} rows.`);
+                    fileInput.value = '';
+                    fetchAnalytics();
+                } else {
+                    showToast(data.error || "Batch ingestion failed.");
+                }
+            } catch (e) {
+                showToast("Error processing CSV.");
+            } finally {
+                hideLoader();
+            }
+        }
+
+        function exportCurrentCsv() {
+            window.location.href = `/api/export_csv?department=${currentDepartment}`;
+        }
+
+        // Lexicon Controls
+        function openLexiconModal() {
+            document.getElementById('lexiconModal').style.display = 'flex';
+            fetchLexicon();
+        }
+        function closeLexiconModal() { document.getElementById('lexiconModal').style.display = 'none'; }
+
+        async function fetchLexicon() {
+            const res = await fetch('/api/lexicon');
+            const data = await res.json();
+            const tbody = document.getElementById('lexiconTableBody');
+            tbody.innerHTML = '';
+            data.forEach(t => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="color:var(--text-title);">${t.word}</td>
+                    <td><span class="badge badge-Neutral">${t.category}</span></td>
+                    <td><button onclick="deleteLexiconTerm(${t.id})" style="background:transparent; border:none; color:#fb7185; cursor:pointer; font-weight:600;">Delete</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function addLexiconTerm() {
+            const word = document.getElementById('newWord').value.trim();
+            const category = document.getElementById('newCategory').value;
+            if (!word) return;
+
+            showLoader("Updating Taglish slang dictionary...");
+
+            try {
+                const res = await fetch('/api/lexicon', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ word, category })
+                });
+                if (res.ok) {
+                    document.getElementById('newWord').value = '';
+                    fetchLexicon();
+                    showToast("Slang term registered in database.");
+                } else {
+                    const data = await res.json();
+                    showToast(data.error || "Failed to add term.");
+                }
+            } catch (err) {
+                showToast("Server communication error.");
+            } finally {
+                hideLoader();
+            }
+        }
+
+        async function deleteLexiconTerm(id) {
+            showLoader("Removing lexicon term...");
+            try {
+                const res = await fetch('/api/lexicon', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id })
+                });
+                if (res.ok) {
+                    fetchLexicon();
+                    showToast("Term removed.");
+                }
+            } catch (err) {
+                showToast("Server error.");
+            } finally {
+                hideLoader();
+            }
+        }
+
+        // Init
+        fetchAnalytics();
+    </script>
+</body>
+</html>
