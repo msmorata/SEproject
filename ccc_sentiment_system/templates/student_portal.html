@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Evaluation Portal — City College of Calamba</title>
+    <style>
+        :root {
+            --surface-ground: #070d1d;
+            --surface-card: #0f1a30;
+            --surface-card-hover: #162444;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --accent-gold: #f59e0b;
+            --text-title: #f8fafc;
+            --text-body: #cbd5e1;
+            --text-muted: #94a3b8;
+            --border-light: rgba(255, 255, 255, 0.08);
+            --badge-pos: #10b981;
+            --badge-pos-bg: rgba(16, 185, 129, 0.15);
+            --badge-neg: #f43f5e;
+            --badge-neg-bg: rgba(244, 63, 94, 0.15);
+            --radius-md: 12px;
+            --radius-lg: 18px;
+            --transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        body { background: var(--surface-ground); color: var(--text-body); min-height: 100vh; overflow-x: hidden; }
+
+        .loader-overlay {
+            position: fixed; inset: 0; background: rgba(7, 13, 29, 0.85); backdrop-filter: blur(8px);
+            display: none; justify-content: center; align-items: center; z-index: 9999; flex-direction: column;
+        }
+        .spinner {
+            width: 48px; height: 48px; border: 4px solid rgba(255,255,255,0.15);
+            border-top: 4px solid var(--primary); border-radius: 50%;
+            animation: spin 0.8s linear infinite; box-shadow: 0 0 15px rgba(37, 99, 235, 0.3);
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .topbar {
+            background: rgba(15, 26, 48, 0.85); backdrop-filter: blur(12px);
+            height: 72px; border-bottom: 1px solid var(--border-light);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 clamp(16px, 4vw, 40px); position: sticky; top: 0; z-index: 100;
+        }
+        .brand-unit { display: flex; align-items: center; gap: 12px; }
+        .brand-logo-img { width: 44px; height: 44px; object-fit: contain; filter: drop-shadow(0 2px 8px rgba(37, 99, 235, 0.45)); }
+        .brand-title { font-size: 1.05rem; font-weight: 700; color: var(--text-title); }
+        .brand-subtitle { font-size: 0.72rem; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .nav-actions { display: flex; align-items: center; gap: 10px; }
+        .btn-nav {
+            background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-light);
+            color: var(--text-title); padding: 7px 13px; border-radius: 8px; font-size: 0.8rem;
+            font-weight: 600; cursor: pointer; transition: var(--transition); display: inline-flex; align-items: center; gap: 6px;
+        }
+        .btn-nav:hover { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.2); }
+        .btn-logout { background: rgba(244, 63, 94, 0.1); border-color: rgba(244, 63, 94, 0.25); color: #fb7185; }
+        .btn-logout:hover { background: rgba(244, 63, 94, 0.2); }
+
+        .role-badge {
+            font-size: 0.7rem; font-weight: 700; padding: 4px 8px; border-radius: 6px;
+            background: rgba(37, 99, 235, 0.15); color: #60a5fa; border: 1px solid rgba(37, 99, 235, 0.3); text-transform: uppercase;
+        }
+
+        .workspace { max-width: 1200px; margin: 0 auto; padding: clamp(16px, 3vw, 32px); }
+
+        .welcome-card {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.15), rgba(15, 26, 48, 0.8));
+            border: 1px solid rgba(37, 99, 235, 0.3); border-radius: var(--radius-lg);
+            padding: 24px; margin-bottom: 28px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;
+        }
+        .welcome-title { font-size: 1.3rem; font-weight: 800; color: var(--text-title); margin-bottom: 6px; }
+        .welcome-sub { font-size: 0.88rem; color: var(--text-body); max-width: 680px; line-height: 1.5; }
+
+        .btn-action {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 11px 20px; background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white; border: none; border-radius: 10px; font-size: 0.88rem; font-weight: 600;
+            cursor: pointer; transition: var(--transition);
+        }
+        .btn-action:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+        .section-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;
+        }
+        .section-title { font-size: 1.1rem; font-weight: 700; color: var(--text-title); }
+
+        .forms-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 18px; margin-bottom: 36px;
+        }
+        .form-card {
+            background: var(--surface-card); border: 1px solid var(--border-light); border-radius: var(--radius-md);
+            padding: 20px; display: flex; flex-direction: column; justify-content: space-between; transition: var(--transition);
+        }
+        .form-card:hover { transform: translateY(-2px); background: var(--surface-card-hover); border-color: rgba(37, 99, 235, 0.4); }
+        .form-category-tag {
+            font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+            padding: 3px 8px; border-radius: 6px; background: rgba(245, 158, 11, 0.15); color: #fbbf24; display: inline-block; margin-bottom: 10px;
+        }
+        .form-card-title { font-size: 1.05rem; font-weight: 700; color: var(--text-title); margin-bottom: 6px; line-height: 1.4; }
+        .form-card-desc { font-size: 0.84rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 16px; flex-grow: 1; }
+        .form-meta { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 16px; border-top: 1px solid var(--border-light); padding-top: 10px; }
+
+        .badge-status { font-size: 0.72rem; font-weight: 700; padding: 4px 8px; border-radius: 9999px; text-transform: uppercase; }
+        .badge-done { background: var(--badge-pos-bg); color: var(--badge-pos); border: 1px solid rgba(16, 185, 129, 0.3); }
+
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(7, 13, 29, 0.85); backdrop-filter: blur(6px);
+            display: none; align-items: center; justify-content: center; z-index: 999;
+        }
+        .modal-card {
+            background: var(--surface-card); border: 1px solid var(--border-light); border-radius: var(--radius-lg);
+            width: min(92%, 620px); max-height: 88vh; overflow-y: auto; padding: 28px;
+        }
+        .modal-sheet {
+            background: var(--surface-card); border: 1px solid var(--border-light); border-radius: var(--radius-lg);
+            width: min(90%, 380px); padding: 28px; text-align: center;
+        }
+
+        .select-input, .textarea-input, .text-input {
+            width: 100%; background: #070d1d; border: 1px solid var(--border-light); border-radius: 10px;
+            color: var(--text-title); font-size: 0.88rem; transition: var(--transition); outline: none; padding: 10px 14px; margin-bottom: 12px;
+        }
+        .textarea-input { height: 85px; resize: vertical; line-height: 1.4; }
+        .select-input:focus, .textarea-input:focus, .text-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25); }
+
+        .question-builder-item {
+            background: rgba(7, 13, 29, 0.6); border: 1px solid var(--border-light); border-radius: 10px;
+            padding: 14px; margin-bottom: 12px; position: relative;
+        }
+
+        #toast {
+            position: fixed; bottom: 24px; right: 24px; background: #162444; color: #fff;
+            padding: 12px 20px; border-radius: 10px; font-size: 0.88rem; display: none;
+            border: 1px solid var(--border-light); box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div id="toast"></div>
+
+    <div id="loader" class="loader-overlay">
+        <div class="spinner"></div>
+        <p id="loaderText" style="margin-top: 16px; color: #f8fafc; font-weight: 500; font-size: 0.92rem;">Ingesting Student Feedback...</p>
+    </div>
+
+    <!-- Sign Out Modal -->
+    <div id="logoutModal" class="modal-overlay">
+        <div class="modal-sheet">
+            <h4 style="color: var(--text-title); font-size: 1.15rem; margin-bottom: 8px;">End Active Session?</h4>
+            <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 22px;">Are you sure you want to exit the Student Evaluation Portal?</p>
+            <div style="display: flex; gap: 12px;">
+                <button class="btn-nav" style="flex: 1; justify-content: center;" onclick="closeLogoutModal()">Cancel</button>
+                <button class="btn-action" style="flex: 1; justify-content: center; background: #f43f5e;" onclick="confirmLogout()">Confirm Sign Out</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dynamic Form Builder Modal (Officers & Class Reps) -->
+    <div id="createFormModal" class="modal-overlay">
+        <div class="modal-card">
+            <h3 style="color:var(--text-title); margin-bottom: 6px;">Create Custom Evaluation Form</h3>
+            <p style="color:var(--text-muted); font-size:0.84rem; margin-bottom: 18px;">Build dynamic questionnaires tailored for campus activities, classroom topics, or events.</p>
+
+            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:4px;">Form Title</label>
+            <input type="text" id="newFormTitle" placeholder="e.g., General Assembly & Tech Seminar Evaluation" class="text-input">
+
+            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:4px;">Purpose / Description</label>
+            <textarea id="newFormDesc" placeholder="Provide context or instructions for fellow students..." class="textarea-input" style="height:65px;"></textarea>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                <div>
+                    <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:4px;">Category</label>
+                    <select id="newFormCategory" class="select-input">
+                        <option value="Event Evaluation">Campus / Event Evaluation</option>
+                        <option value="Classroom Feedback">Classroom & Course Delivery</option>
+                        <option value="Facilities Grievance">Facilities & Lab Inspection</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:4px;">Academic Year</label>
+                    <select id="newFormYear" class="select-input">
+                        {% for yr in available_years %}
+                        <option value="{{ yr }}">{{ yr }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 14px;">
+                <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:4px;">Semester</label>
+                <select id="newFormSem" class="select-input">
+                    <option value="1st Semester">1st Semester</option>
+                    <option value="2nd Semester">2nd Semester</option>
+                </select>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin: 16px 0 10px 0;">
+                <span style="font-size:0.88rem; font-weight:700; color:var(--text-title);">Evaluation Questions</span>
+                <button type="button" class="btn-nav" onclick="addQuestionField()" style="font-size:0.75rem; color:#60a5fa;">+ Add Question</button>
+            </div>
+
+            <div id="questionsContainer"></div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                <button class="btn-nav" onclick="closeCreateFormModal()">Cancel</button>
+                <button class="btn-action" onclick="submitCreateForm()">Publish Evaluation Form</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Form Filling & Direct Submission Modal -->
+    <div id="fillFormModal" class="modal-overlay">
+        <div class="modal-card">
+            <span class="form-category-tag" id="fillModalCategory">Event Evaluation</span>
+            <h3 style="color:var(--text-title); margin-bottom: 6px;" id="fillModalTitle">Form Title</h3>
+            <p style="color:var(--text-muted); font-size:0.84rem; margin-bottom: 18px;" id="fillModalDesc"></p>
+
+            <div id="fillQuestionsList"></div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                <button class="btn-nav" onclick="closeFillFormModal()">Cancel</button>
+                <button class="btn-action" onclick="submitAnswers()">Submit Evaluation</button>
+            </div>
+        </div>
+    </div>
+
+    <header class="topbar">
+        <div class="brand-unit">
+            <img src="{{ url_for('static', filename='ccclogo.png') }}" alt="CCC Logo" class="brand-logo-img">
+            <div>
+                <div class="brand-title">Student Evaluation Portal</div>
+                <div class="brand-subtitle">City College of Calamba</div>
+            </div>
+        </div>
+        <div class="nav-actions">
+            <span class="role-badge">{{ role }}</span>
+            <span style="font-size:0.86rem; font-weight:600; color:var(--text-title);">{{ username }}</span>
+            <button class="btn-nav btn-logout" onclick="openLogoutModal()">Sign Out</button>
+        </div>
+    </header>
+
+    <main class="workspace">
+        <section class="welcome-card">
+            <div>
+                <div class="welcome-title">Welcome, {{ username }}</div>
+                <div class="welcome-sub">
+                    Department of <strong>{{ department }}</strong> ({{ program }}). 
+                    Your feedback is processed immediately by the campus ABSA decision engine to uphold high academic standards.
+                </div>
+            </div>
+            {% if role in ['Student - Officer', 'Student - Class Representative', 'MISD'] %}
+            <button class="btn-action" onclick="openCreateFormModal()">+ Create Evaluation Form</button>
+            {% endif %}
+        </section>
+
+        {% if role in ['Student - Officer', 'Student - Class Representative', 'MISD'] %}
+        <div class="section-header">
+            <div class="section-title">Forms Authored By You</div>
+        </div>
+        <div id="myFormsContainer" class="forms-grid" style="margin-bottom: 30px;"></div>
+        {% endif %}
+
+        <div class="section-header">
+            <div class="section-title">Available Campus & Academic Evaluations</div>
+        </div>
+        <div id="availableFormsContainer" class="forms-grid"></div>
+    </main>
+
+    <script>
+        // Trap browser history navigation
+        history.pushState(null, document.title, location.href);
+        window.addEventListener('popstate', function () {
+            history.pushState(null, document.title, location.href);
+            showToast("Active portal session locked. Please use 'Sign Out' to leave.");
+        });
+
+        window.addEventListener('pageshow', function (event) {
+            if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+                window.location.reload();
+            }
+        });
+
+        let activeFormUnderFill = null;
+
+        function showLoader(msg = "Ingesting Student Feedback...") {
+            document.getElementById('loaderText').innerText = msg;
+            document.getElementById('loader').style.display = 'flex';
+        }
+        function hideLoader() { document.getElementById('loader').style.display = 'none'; }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.style.display = 'block';
+            setTimeout(() => { t.style.display = 'none'; }, 3500);
+        }
+
+        function openLogoutModal() { document.getElementById('logoutModal').style.display = 'flex'; }
+        function closeLogoutModal() { document.getElementById('logoutModal').style.display = 'none'; }
+        function confirmLogout() {
+            closeLogoutModal();
+            showLoader("Terminating session and signing out...");
+            window.location.href = "{{ url_for('logout') }}";
+        }
+
+        function openCreateFormModal() {
+            document.getElementById('newFormTitle').value = '';
+            document.getElementById('newFormDesc').value = '';
+            document.getElementById('questionsContainer').innerHTML = '';
+            addQuestionField("How was the speaker's discussion clarity and instructional delivery during the activity?");
+            document.getElementById('createFormModal').style.display = 'flex';
+        }
+        function closeCreateFormModal() { document.getElementById('createFormModal').style.display = 'none'; }
+
+        function addQuestionField(defaultText = "") {
+            const container = document.getElementById('questionsContainer');
+            const qIdx = container.children.length + 1;
+            const div = document.createElement('div');
+            div.className = 'question-builder-item';
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                    <strong style="font-size:0.78rem; color:#60a5fa;">Question #${qIdx}</strong>
+                    <button type="button" onclick="this.parentElement.parentElement.remove()" style="background:none; border:none; color:#fb7185; cursor:pointer; font-weight:bold; font-size:0.75rem;">Remove</button>
+                </div>
+                <input type="text" class="text-input q-prompt-input" style="margin-bottom:0;" placeholder="Enter narrative evaluation prompt..." value="${defaultText}">
+            `;
+            container.appendChild(div);
+        }
+
+        async function submitCreateForm() {
+            const title = document.getElementById('newFormTitle').value.trim();
+            const description = document.getElementById('newFormDesc').value.trim();
+            const form_category = document.getElementById('newFormCategory').value;
+            const academic_year = document.getElementById('newFormYear').value;
+            const semester = document.getElementById('newFormSem').value;
+
+            const promptInputs = document.querySelectorAll('.q-prompt-input');
+            const questions = [];
+            promptInputs.forEach((inp, i) => {
+                const val = inp.value.trim();
+                if (val) {
+                    questions.push({ id: i + 1, prompt: val });
+                }
+            });
+
+            if (!title) return showToast("Please input a form title.");
+            if (questions.length === 0) return showToast("Add at least one question.");
+
+            showLoader("Publishing evaluation form...");
+            try {
+                const res = await fetch('/api/forms/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title, description, form_category, academic_year, semester, questions
+                    })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    closeCreateFormModal();
+                    showToast("Form published successfully.");
+                    loadAllForms();
+                } else {
+                    showToast(data.error || "Failed to create form.");
+                }
+            } catch (e) {
+                showToast("Server communication error.");
+            } finally {
+                hideLoader();
+            }
+        }
+
+        async function loadAllForms() {
+            try {
+                const res = await fetch('/api/forms');
+                const forms = await res.json();
+                const container = document.getElementById('availableFormsContainer');
+                container.innerHTML = '';
+
+                if (forms.length === 0) {
+                    container.innerHTML = '<p style="color:var(--text-muted); font-size:0.88rem;">No evaluation forms currently open for your section.</p>';
+                    return;
+                }
+
+                forms.forEach(f => {
+                    const card = document.createElement('div');
+                    card.className = 'form-card';
+                    card.innerHTML = `
+                        <div>
+                            <span class="form-category-tag">${f.form_category}</span>
+                            <div class="form-card-title">${f.title}</div>
+                            <div class="form-card-desc">${f.description || 'No description provided.'}</div>
+                        </div>
+                        <div>
+                            <div class="form-meta">
+                                By: <strong>${f.created_by_name}</strong> (${f.created_by_role})<br>
+                                Term: ${f.academic_year} — ${f.semester}
+                            </div>
+                            ${f.already_submitted ? 
+                                `<span class="badge-status badge-done">Evaluation Submitted</span>` :
+                                `<button class="btn-action" style="width:100%;" onclick="openFillModal(${f.id})">Fill Out Evaluation</button>`
+                            }
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+
+                // Load authored forms if user is Class Rep or Officer
+                if (document.getElementById('myFormsContainer')) {
+                    loadMyForms();
+                }
+            } catch (err) {
+                console.error("Failed to load forms:", err);
+            }
+        }
+
+        async function loadMyForms() {
+            try {
+                const res = await fetch('/api/forms/my_forms');
+                const myForms = await res.json();
+                const container = document.getElementById('myFormsContainer');
+                container.innerHTML = '';
+
+                if (myForms.length === 0) {
+                    container.innerHTML = '<p style="color:var(--text-muted); font-size:0.88rem;">You have not published any custom forms yet.</p>';
+                    return;
+                }
+
+                myForms.forEach(f => {
+                    const card = document.createElement('div');
+                    card.className = 'form-card';
+                    card.innerHTML = `
+                        <div>
+                            <span class="form-category-tag">${f.form_category}</span>
+                            <div class="form-card-title">${f.title}</div>
+                            <div class="form-card-desc">Responses Collected: <strong style="color:#60a5fa; font-size:1.1rem;">${f.response_count}</strong> students</div>
+                        </div>
+                        <div class="form-meta">
+                            Term: ${f.academic_year} — ${f.semester}<br>
+                            Created: ${f.created_at}
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            } catch (e) {
+                console.error("Failed to load authored forms:", e);
+            }
+        }
+
+        async function openFillModal(formId) {
+            try {
+                const res = await fetch('/api/forms');
+                const forms = await res.json();
+                const target = forms.find(f => f.id === formId);
+                if (!target) return;
+
+                activeFormUnderFill = target;
+                document.getElementById('fillModalCategory').innerText = target.form_category;
+                document.getElementById('fillModalTitle').innerText = target.title;
+                document.getElementById('fillModalDesc').innerText = target.description || '';
+
+                const qList = document.getElementById('fillQuestionsList');
+                qList.innerHTML = '';
+
+                target.questions.forEach((q, idx) => {
+                    const qDiv = document.createElement('div');
+                    qDiv.style.marginBottom = '16px';
+                    qDiv.innerHTML = `
+                        <label style="display:block; font-size:0.86rem; font-weight:600; color:var(--text-title); margin-bottom:6px;">
+                            ${idx + 1}. ${q.prompt}
+                        </label>
+                        <textarea class="textarea-input form-answer-input" data-qid="${q.id}" placeholder="Write student feedback in English, Tagalog, or Taglish..."></textarea>
+                    `;
+                    qList.appendChild(qDiv);
+                });
+
+                document.getElementById('fillFormModal').style.display = 'flex';
+            } catch (e) {
+                showToast("Error opening evaluation form.");
+            }
+        }
+        function closeFillFormModal() { document.getElementById('fillFormModal').style.display = 'none'; }
+
+        async function submitAnswers() {
+            if (!activeFormUnderFill) return;
+            const textareas = document.querySelectorAll('.form-answer-input');
+            const answers = [];
+
+            textareas.forEach(ta => {
+                const val = ta.value.trim();
+                if (val) {
+                    answers.push({
+                        question_id: ta.getAttribute('data-qid'),
+                        answer: val
+                    });
+                }
+            });
+
+            if (answers.length === 0) return showToast("Please answer at least one question.");
+
+            closeFillFormModal();
+            showLoader("Feeding responses into ABSA decision model...");
+
+            try {
+                const res = await fetch('/api/forms/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        form_id: activeFormUnderFill.id,
+                        answers: answers
+                    })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast("Feedback submitted and analyzed successfully!");
+                    loadAllForms();
+                } else {
+                    showToast(data.error || "Submission failed.");
+                }
+            } catch (e) {
+                showToast("Server error during submission.");
+            } finally {
+                hideLoader();
+            }
+        }
+
+        loadAllForms();
+    </script>
+</body>
+</html>
