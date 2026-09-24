@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Executive ABSA Portal — City College of Calamba</title>
+    <style>
+        :root {
+            --surface-ground: #070d1d;
+            --surface-card: #0f1a30;
+            --surface-card-hover: #162444;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --accent-gold: #f59e0b;
+            --text-title: #f8fafc;
+            --text-body: #cbd5e1;
+            --text-muted: #94a3b8;
+            --border-light: rgba(255, 255, 255, 0.08);
+            --badge-pos: #10b981;
+            --badge-pos-bg: rgba(16, 185, 129, 0.15);
+            --badge-neg: #f43f5e;
+            --badge-neg-bg: rgba(244, 63, 94, 0.15);
+            --badge-neu: #f59e0b;
+            --badge-neu-bg: rgba(245, 158, 11, 0.15);
+            --radius-md: 12px;
+            --radius-lg: 18px;
+            --transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        body { background: var(--surface-ground); color: var(--text-body); min-height: 100vh; overflow-x: hidden; }
+
+        .loader-overlay {
+            position: fixed; inset: 0; background: rgba(7, 13, 29, 0.85); backdrop-filter: blur(8px);
+            display: none; justify-content: center; align-items: center; z-index: 9999; flex-direction: column;
+        }
+        .spinner {
+            width: 48px; height: 48px; border: 4px solid rgba(255,255,255,0.15);
+            border-top: 4px solid var(--primary); border-radius: 50%;
+            animation: spin 0.8s linear infinite; box-shadow: 0 0 15px rgba(37, 99, 235, 0.3);
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .topbar {
+            background: rgba(15, 26, 48, 0.85); backdrop-filter: blur(12px);
+            height: 72px; border-bottom: 1px solid var(--border-light);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 clamp(16px, 4vw, 40px); position: sticky; top: 0; z-index: 100;
+        }
+        .brand-unit { display: flex; align-items: center; gap: 12px; }
+        .brand-logo-img {
+            width: 44px; height: 44px; object-fit: contain;
+            filter: drop-shadow(0 2px 8px rgba(37, 99, 235, 0.45));
+        }
+        .brand-title { font-size: 1.05rem; font-weight: 700; color: var(--text-title); }
+        .brand-subtitle { font-size: 0.72rem; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .nav-actions { display: flex; align-items: center; gap: 10px; }
+        .btn-nav {
+            background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-light);
+            color: var(--text-title); padding: 7px 13px; border-radius: 8px; font-size: 0.8rem;
+            font-weight: 600; cursor: pointer; transition: var(--transition); display: inline-flex; align-items: center; gap: 6px;
+        }
+        .btn-nav:hover { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.2); }
+        .btn-logout { background: rgba(244, 63, 94, 0.1); border-color: rgba(244, 63, 94, 0.25); color: #fb7185; }
+        .btn-logout:hover { background: rgba(244, 63, 94, 0.2); }
+
+        .role-badge {
+            font-size: 0.7rem; font-weight: 700; padding: 4px 8px; border-radius: 6px;
+            background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); text-transform: uppercase;
+        }
+
+        .workspace { max-width: 1440px; margin: 0 auto; padding: clamp(16px, 3vw, 32px); }
+
+        .controls-toolbar {
+            display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+            gap: 12px; margin-bottom: 20px;
+        }
+        .dept-filter-bar {
+            display: flex; align-items: center; gap: 8px; overflow-x: auto; padding-bottom: 4px;
+        }
+        .dept-tab {
+            padding: 9px 18px; border-radius: 10px; font-size: 0.84rem; font-weight: 600;
+            background: var(--surface-card); border: 1px solid var(--border-light);
+            color: var(--text-muted); cursor: pointer; transition: var(--transition); white-space: nowrap;
+        }
+        .dept-tab:hover { color: var(--text-title); border-color: rgba(255, 255, 255, 0.2); }
+        .dept-tab.active {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white; border-color: transparent; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+        }
+
+        .term-selector-group {
+            display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+        }
+        .term-select {
+            background: #0f1a30; border: 1px solid var(--border-light); border-radius: 8px;
+            color: var(--text-title); font-size: 0.82rem; font-weight: 600; padding: 8px 12px;
+            outline: none; cursor: pointer; transition: var(--transition);
+        }
+        .term-select:focus { border-color: var(--primary); }
+
+        .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .kpi-card {
+            background: var(--surface-card); border: 1px solid var(--border-light); border-radius: var(--radius-md);
+            padding: 20px; position: relative; overflow: hidden; transition: var(--transition);
+        }
+        .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--accent); }
+        .kpi-card:hover { transform: translateY(-2px); background: var(--surface-card-hover); }
+        .kpi-header { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .kpi-value { font-size: 2.2rem; font-weight: 800; color: var(--text-title); margin: 8px 0 4px 0; }
+        .kpi-sub { font-size: 0.78rem; font-weight: 500; color: var(--text-muted); }
+
+        .alert-panel {
+            background: rgba(15, 26, 48, 0.6); border: 1px solid rgba(37, 99, 235, 0.25);
+            border-radius: var(--radius-md); padding: 18px 24px; margin-bottom: 24px;
+        }
+        .alert-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .alert-tag { font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 9999px; text-transform: uppercase; }
+        .alert-tag-critical { background: rgba(244, 63, 94, 0.2); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.4); }
+        .alert-tag-stable { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+        .alert-text { font-size: 0.9rem; line-height: 1.5; color: var(--text-title); }
+
+        .main-grid { display: grid; gap: 20px; margin-bottom: 24px; }
+        .panel {
+            background: var(--surface-card); border: 1px solid var(--border-light); border-radius: var(--radius-lg);
+            padding: clamp(18px, 2.5vw, 24px); display: flex; flex-direction: column;
+        }
+        .panel-heading {
+            font-size: 1.05rem; font-weight: 700; color: var(--text-title); margin-bottom: 16px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .select-input, .textarea-input {
+            width: 100%; background: #070d1d; border: 1px solid var(--border-light); border-radius: 10px;
+            color: var(--text-title); font-size: 0.9rem; transition: var(--transition); outline: none;
+        }
+        .select-input { padding: 11px 14px; margin-bottom: 14px; }
+        .textarea-input { height: 95px; padding: 12px; resize: none; margin-bottom: 14px; line-height: 1.5; }
+        .select-input:focus, .textarea-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25); background: #0c152e; }
+
+        .btn-action {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 12px 20px; background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white; border: none; border-radius: 10px; font-size: 0.88rem; font-weight: 600;
+            cursor: pointer; transition: var(--transition);
+        }
+        .btn-action:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+        .charts-double { display: grid; grid-template-columns: 1fr 1.25fr; gap: 16px; align-items: center; }
+        .chart-box {
+            position: relative; width: 100%; height: 230px; display: flex;
+            align-items: center; justify-content: center; background: rgba(7, 13, 29, 0.4);
+            border-radius: var(--radius-md); border: 1px solid var(--border-light);
+            padding: 10px; box-sizing: border-box;
+        }
+        .chart-box img {
+            max-width: 100%; max-height: 100%; object-fit: contain;
+            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.25)); display: none;
+        }
+
+        .table-toolbar {
+            display: flex; justify-content: space-between; align-items: center; gap: 12px;
+            margin-bottom: 14px; flex-wrap: wrap;
+        }
+        .search-input-box {
+            position: relative; min-width: 260px; flex: 1; max-width: 420px;
+        }
+        .search-input-box input {
+            width: 100%; background: #070d1d; border: 1px solid var(--border-light);
+            border-radius: 8px; color: var(--text-title); font-size: 0.84rem; padding: 8px 12px 8px 32px;
+            outline: none; transition: var(--transition);
+        }
+        .search-input-box input:focus { border-color: var(--primary); }
+        .search-icon {
+            position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+            color: var(--text-muted); font-size: 0.8rem; pointer-events: none;
+        }
+
+        .table-responsive { width: 100%; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th {
+            background: rgba(7, 13, 29, 0.5); color: var(--text-muted); font-size: 0.72rem;
+            font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 12px 16px;
+            border-bottom: 1px solid var(--border-light);
+        }
+        td { padding: 14px 16px; border-bottom: 1px solid var(--border-light); font-size: 0.86rem; vertical-align: top; }
+        tbody tr { cursor: pointer; transition: var(--transition); }
+        tbody tr:hover { background: rgba(59, 130, 246, 0.08); }
+
+        .pagination-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px 4px 4px 4px; font-size: 0.82rem; color: var(--text-muted);
+        }
+        .pagination-controls { display: flex; align-items: center; gap: 8px; }
+        .btn-page {
+            background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-light);
+            color: var(--text-title); padding: 5px 12px; border-radius: 6px; font-size: 0.78rem;
+            cursor: pointer; transition: var(--transition);
+        }
+        .btn-page:hover:not(:disabled) { background: rgba(255, 255, 255, 0.1); }
+        .btn-page:disabled { opacity: 0.35; cursor: not-allowed; }
+
+        .badge { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 9999px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; }
+        .badge-Positive { background: var(--badge-pos-bg); color: var(--badge-pos); }
+        .badge-Negative { background: var(--badge-neg-bg); color: var(--badge-neg); }
+        .badge-Neutral { background: var(--badge-neu-bg); color: var(--badge-neu); }
+
+        .token-chip-container {
+            display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; align-items: center;
+        }
+        .token-chip {
+            font-size: 0.7rem; font-weight: 600; padding: 2px 7px; border-radius: 6px;
+            display: inline-flex; align-items: center; gap: 4px; line-height: 1.3;
+        }
+        .token-pos { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .token-neg { background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.3); }
+        .token-amp { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .token-inv { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
+        .token-neu { background: rgba(255, 255, 255, 0.04); color: #64748b; border: 1px solid rgba(255, 255, 255, 0.08); }
+
+        #tutorialWidget {
+            position: fixed; bottom: 35px; right: 35px; width: 340px;
+            background: #0f1a30; border: 2px solid #f59e0b;
+            border-radius: var(--radius-md); box-shadow: 0 25px 50px rgba(0,0,0,0.75);
+            z-index: 2000; overflow: hidden; display: none; user-select: none;
+        }
+        .tutorial-header {
+            background: linear-gradient(135deg, #1e3a8a, #0b1528);
+            padding: 12px 16px; cursor: move; display: flex; align-items: center;
+            justify-content: space-between; border-bottom: 1px solid var(--border-light);
+        }
+        .tutorial-body { padding: 16px; font-size: 0.86rem; line-height: 1.5; color: var(--text-body); }
+        .tutorial-step { font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; font-weight: 800; color: #fbbf24; }
+        .tutorial-title { font-size: 1.02rem; font-weight: 700; color: var(--text-title); margin-bottom: 8px; }
+
+        .tut-highlight {
+            outline: 3.5px solid #f59e0b !important;
+            box-shadow: 0 0 35px rgba(245, 158, 11, 0.75), inset 0 0 15px rgba(245, 158, 11, 0.15) !important;
+            border-radius: var(--radius-md) !important;
+            position: relative;
+            z-index: 100 !important;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(7, 13, 29, 0.8); backdrop-filter: blur(6px);
+            display: none; align-items: center; justify-content: center; z-index: 999;
+        }
+        .modal-card {
+            background: var(--surface-card); border: 1px solid var(--border-light); border-radius: var(--radius-lg);
+            width: min(92%, 720px); max-height: 88vh; overflow-y: auto; padding: 28px;
+        }
+        .modal-sheet {
+            background: var(--surface-card); border: 1px solid var(--border-light); border-radius: var(--radius-lg);
+            width: min(90%, 380px); padding: 28px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+        }
+
+        #toast {
+            position: fixed; bottom: 24px; right: 24px; background: #162444; color: #fff;
+            padding: 12px 20px; border-radius: 10px; font-size: 0.88rem; display: none;
+            border: 1px solid var(--border-light); box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 1000;
+        }
+
+        @media(max-width: 1024px) {
+            .charts-double { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div id="toast"></div>
+
+    <div id="loader" class="loader-overlay">
+        <div class="spinner"></div>
+        <p id="loaderText" style="margin-top: 16px; color: #f8fafc; font-weight: 500; font-size: 0.92rem;">Processing ABSA Pipeline...</p>
+    </div>
+
+    <!-- Algorithm Dissection & Prescriptive Action Inspector Modal -->
+    <div id="algorithmModal" class="modal-overlay">
+        <div class="modal-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <span style="font-size:0.75rem; font-weight:800; color:#60a5fa; text-transform:uppercase;">🔬 XLM-RoBERTa & Lexicon Dissection Inspector</span>
+                <button class="btn-nav" onclick="closeAlgorithmModal()" style="padding:4px 10px; font-size:0.78rem;">✕ Close</button>
+            </div>
+            
+            <h3 style="color:var(--text-title); font-size:1.15rem; margin-bottom: 6px;" id="modalFeedbackRaw">Feedback Text</h3>
+            <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
+                <span id="modalSentimentBadge" class="badge badge-Positive">Positive</span>
+                <span id="modalDeptBadge" class="badge badge-Neutral" style="background:rgba(37,99,235,0.2); color:#60a5fa;">DCI</span>
+                <span id="modalConfidenceBadge" class="badge badge-Neutral" style="background:rgba(245,158,11,0.2); color:#fbbf24;">Confidence: 95%</span>
+            </div>
+
+            <div style="background:rgba(7,13,29,0.65); border:1px solid var(--border-light); border-radius:var(--radius-md); padding:16px; margin-bottom:16px;">
+                <div style="font-size:0.75rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; margin-bottom:8px;">
+                    1. Token-Level Mathematical Weight & Dissection:
+                </div>
+                <div id="modalTokenWeightsContainer" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+            </div>
+
+            <div style="background:rgba(7,13,29,0.65); border:1px solid var(--border-light); border-radius:var(--radius-md); padding:16px; margin-bottom:16px;">
+                <div style="font-size:0.75rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; margin-bottom:8px;">
+                    2. Clause Aspect & Sentiment Breakdown:
+                </div>
+                <div id="modalClauseBreakdown" style="display:flex; flex-direction:column; gap:8px;"></div>
+            </div>
+
+            <div style="background:rgba(16,185,129,0.08); border-left:3px solid #10b981; border-radius:8px; padding:16px; margin-bottom:20px;">
+                <div style="font-size:0.75rem; font-weight:800; color:#34d399; text-transform:uppercase; margin-bottom:4px;">
+                    3. Prescriptive Institutional Action Plan:
+                </div>
+                <div id="modalPrescriptiveAction" style="font-size:0.86rem; color:var(--text-title); line-height:1.5;">
+                    Analyzing required intervention steps...
+                </div>
+            </div>
+
+            <div style="text-align: right;">
+                <button class="btn-action" onclick="closeAlgorithmModal()">Acknowledge & Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Draggable Spotlight Tutorial Card -->
+    <div id="tutorialWidget">
+        <div class="tutorial-header" id="tutorialHeader">
+            <span style="font-size:0.8rem; font-weight:800; color:#fbbf24; text-transform:uppercase;">
+                {{ role }} Guidebook
+            </span>
+            <button onclick="toggleTutorial()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-weight:bold; font-size:0.9rem;">✕</button>
+        </div>
+        <div class="tutorial-body">
+            <div class="tutorial-step" id="tutStepCount">STEP 1 OF 7</div>
+            <div class="tutorial-title" id="tutStepTitle">Title</div>
+            <p id="tutStepDesc" style="color:#cbd5e1; margin-bottom:14px; font-size:0.85rem;"></p>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <button class="btn-nav" onclick="prevTutStep()" id="btnTutBack" style="padding:5px 12px; font-size:0.75rem;">Previous</button>
+                <span id="tutRoleTag" style="font-size:0.7rem; color:var(--text-muted); font-weight:600;">Clearance: {{ role }}</span>
+                <button class="btn-nav" onclick="nextTutStep()" id="btnTutNext" style="padding:5px 14px; font-size:0.75rem; background:var(--primary);">Next Step</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Academic Year Modal (MISD Only) -->
+    {% if role == 'MISD' %}
+    <div id="addYearModal" class="modal-overlay">
+        <div class="modal-sheet" style="text-align: left; width: min(90%, 420px);">
+            <h4 style="color: var(--text-title); font-size: 1.15rem; margin-bottom: 8px;">Register Academic Year</h4>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px;">Format must follow standard academic cycle (e.g. 2026-2027).</p>
+            
+            <input type="text" id="newYearInput" placeholder="YYYY-YYYY (e.g. 2027-2028)" class="select-input" style="margin-bottom: 16px;">
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="btn-nav" onclick="closeAddYearModal()">Cancel</button>
+                <button class="btn-action" onclick="submitNewYear()">Save Academic Year</button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Logout Confirmation Sheet -->
+    <div id="logoutModal" class="modal-overlay">
+        <div class="modal-sheet">
+            <h4 style="color: var(--text-title); font-size: 1.15rem; margin-bottom: 8px;">End Active Session?</h4>
+            <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 22px;">Are you sure you want to log out of the institutional evaluation portal?</p>
+            <div style="display: flex; gap: 12px;">
+                <button class="btn-nav" style="flex: 1; justify-content: center;" onclick="closeLogoutModal()">Cancel</button>
+                <button class="btn-action" style="flex: 1; justify-content: center; background: #f43f5e;" onclick="confirmLogout()">Confirm Sign Out</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Batch CSV Ingestion Modal (MISD Only) -->
+    {% if role == 'MISD' %}
+    <div id="csvModal" class="modal-overlay">
+        <div class="modal-card">
+            <h3 style="color:var(--text-title); margin-bottom: 8px;">Batch Survey CSV Ingestion</h3>
+            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom: 18px;">Upload semester student narratives. Auto-detects feedback columns.</p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                <div>
+                    <label class="field-label" style="display:block; margin-bottom:4px; font-size:0.75rem; color:var(--text-muted);">Academic Year</label>
+                    <select id="csvYear" class="select-input" style="margin-bottom:0;"></select>
+                </div>
+                <div>
+                    <label class="field-label" style="display:block; margin-bottom:4px; font-size:0.75rem; color:var(--text-muted);">Semester</label>
+                    <select id="csvSem" class="select-input" style="margin-bottom:0;">
+                        <option value="1st Semester">1st Semester</option>
+                        <option value="2nd Semester">2nd Semester</option>
+                    </select>
+                </div>
+            </div>
+
+            <label class="field-label" style="display:block; margin-bottom:4px; font-size:0.75rem; color:var(--text-muted);">Academic Department</label>
+            <select id="csvDept" class="select-input">
+                <option value="DCI">Department of Computing and Informatics (DCI)</option>
+                <option value="DBA">Department of Business and Accountancy (DBA)</option>
+                <option value="DTE">Department of Teacher Education (DTE)</option>
+                <option value="DAS">Department of Arts and Sciences (DAS)</option>
+            </select>
+
+            <input type="file" id="csvFileInput" accept=".csv" style="margin: 6px 0 20px 0; color:var(--text-body);">
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="btn-nav" onclick="closeCsvModal()">Cancel</button>
+                <button class="btn-action" onclick="submitCsv()">Execute Ingestion</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slang Manager Modal (MISD Only) -->
+    <div id="lexiconModal" class="modal-overlay">
+        <div class="modal-card" style="width: min(92%, 680px);">
+            <h3 style="color:var(--text-title); margin-bottom: 6px;">Dynamic Taglish Slang Manager</h3>
+            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom: 18px;">Register and tune emerging campus vernacular without code deployment.</p>
+
+            <div style="display: grid; grid-template-columns: 2fr 1.5fr 1fr; gap: 10px; margin-bottom: 16px;">
+                <input type="text" id="newWord" placeholder="e.g., goods, petiks, sabaw" class="select-input" style="margin-bottom:0;">
+                <select id="newCategory" class="select-input" style="margin-bottom:0;">
+                    <option value="positive">Positive Term</option>
+                    <option value="negative">Negative Term</option>
+                    <option value="intensifiers">Intensifier</option>
+                    <option value="negations">Negation</option>
+                </select>
+                <button class="btn-action" onclick="addLexiconTerm()">Add Term</button>
+            </div>
+
+            <div style="max-height: 280px; overflow-y: auto; border: 1px solid var(--border-light); border-radius: 8px;">
+                <table style="width: 100%;">
+                    <thead>
+                        <tr><th>Term</th><th>Category</th><th>Action</th></tr>
+                    </thead>
+                    <tbody id="lexiconTableBody"></tbody>
+                </table>
+            </div>
+
+            <div style="text-align: right; margin-top: 18px;">
+                <button class="btn-nav" onclick="closeLexiconModal()">Close Manager</button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Top Navigation Header -->
+    <header class="topbar">
+        <div class="brand-unit">
+            <img src="{{ url_for('static', filename='ccclogo.png') }}" alt="CCC Logo" class="brand-logo-img">
+            <div>
+                <div class="brand-title">Sentiment Evaluation System</div>
+                <div class="brand-subtitle">Multilingual ABSA Decision Portal</div>
+            </div>
+        </div>
+        <div class="nav-actions" id="navActionsTarget">
+            <button class="btn-nav" onclick="toggleTutorial()" style="border-color:rgba(245,158,11,0.4); color:#fbbf24;">Interactive Tutorial</button>
+            {% if role == 'MISD' %}
+            <button class="btn-nav" onclick="openCsvModal()">Batch CSV</button>
+            {% endif %}
+            <button class="btn-nav" onclick="exportCurrentCsv()">Export CSV</button>
+            {% if role == 'MISD' %}
+            <button class="btn-nav" onclick="openLexiconModal()">Slang Manager</button>
+            {% endif %}
+            <span style="font-size:0.82rem; color:var(--text-muted); margin: 0 4px;">|</span>
+            <span class="role-badge">{{ role }}</span>
+            <span style="font-size:0.86rem; font-weight:600; color:var(--text-title);">{{ username }}</span>
+            <button class="btn-nav btn-logout" onclick="openLogoutModal()">Sign Out</button>
+        </div>
+    </header>
+
+    <main class="workspace">
+        <!-- Controls Toolbar: Department Tabs + Term/Year Filter -->
+        <div class="controls-toolbar" id="deptFilterBarTarget">
+            <div class="dept-filter-bar">
+                {% if role == 'MISD' %}
+                    <button class="dept-tab active" onclick="switchDepartment('ALL', this)">All Departments (Oversight)</button>
+                    <button class="dept-tab" onclick="switchDepartment('DCI', this)">DCI</button>
+                    <button class="dept-tab" onclick="switchDepartment('DBA', this)">DBA</button>
+                    <button class="dept-tab" onclick="switchDepartment('DTE', this)">DTE</button>
+                    <button class="dept-tab" onclick="switchDepartment('DAS', this)">DAS</button>
+                {% else %}
+                    <button class="dept-tab active">{{ user_dept }} — [{{ user_program }}]</button>
+                {% endif %}
+            </div>
+
+            <!-- Academic Year & Semester Selectors -->
+            <div class="term-selector-group" id="termFilterTarget">
+                <select id="filterYear" class="term-select" onchange="onFilterChange()"></select>
+
+                <select id="filterSem" class="term-select" onchange="onFilterChange()">
+                    <option value="ALL">All Semesters</option>
+                    <option value="1st Semester" selected>1st Semester</option>
+                    <option value="2nd Semester">2nd Semester</option>
+                </select>
+
+                {% if role == 'MISD' %}
+                <button class="btn-nav" onclick="openAddYearModal()" style="border-color:rgba(37,99,235,0.4); color:#60a5fa;">+ Add Year</button>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Prescriptive Analytics Alert -->
+        <div class="alert-panel" id="prescriptiveBoxTarget">
+            <div class="alert-header">
+                <strong style="color:var(--text-title); font-size:0.92rem;">Prescriptive Quality Assurance Advisory</strong>
+                <span class="alert-tag alert-tag-stable" id="prescriptiveTag">Baseline</span>
+            </div>
+            <div class="alert-text" id="prescriptiveText">Loading prescriptive diagnostics...</div>
+        </div>
+
+        <!-- KPI Metrics -->
+        <section class="kpi-row" id="kpiRowTarget">
+            <div class="kpi-card" style="--accent: var(--primary);">
+                <div class="kpi-header">Total Evaluated</div>
+                <div class="kpi-value" id="kpi-total">0</div>
+                <div class="kpi-sub">Total student comments logged</div>
+            </div>
+            <div class="kpi-card" style="--accent: var(--badge-pos);">
+                <div class="kpi-header">Positive Polarity</div>
+                <div class="kpi-value" style="color:var(--badge-pos);" id="kpi-pos">0</div>
+                <div class="kpi-sub">Commendations & approval</div>
+            </div>
+            <div class="kpi-card" style="--accent: var(--badge-neg);">
+                <div class="kpi-header">Negative Polarity</div>
+                <div class="kpi-value" style="color:var(--badge-neg);" id="kpi-neg">0</div>
+                <div class="kpi-sub">Actionable grievances logged</div>
+            </div>
+            <div class="kpi-card" style="--accent: var(--badge-neu);">
+                <div class="kpi-header">Neutral Feedback</div>
+                <div class="kpi-value" style="color:var(--badge-neu);" id="kpi-neu">0</div>
+                <div class="kpi-sub">Descriptive remarks</div>
+            </div>
+        </section>
+
+        <!-- Evaluation Console + Visualizations -->
+        <div class="main-grid" {% if role == 'MISD' %}style="grid-template-columns: 1.1fr 1fr;"{% else %}style="grid-template-columns: 1fr;"{% endif %}>
+            
+            {% if role == 'MISD' %}
+            <!-- Diagnostic Sandbox (MISD Only) -->
+            <section class="panel" id="narrativePanelTarget">
+                <div class="panel-heading">
+                    <span>Ad-hoc Diagnostic Sandbox</span>
+                    <span style="font-size:0.75rem; color:var(--text-muted);">MISD Clearance Only</span>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+                    <select id="singleDept" class="select-input" style="margin-bottom:0;">
+                        <option value="DCI">DCI</option>
+                        <option value="DBA">DBA</option>
+                        <option value="DTE">DTE</option>
+                        <option value="DAS">DAS</option>
+                    </select>
+                    <select id="singleYear" class="select-input" style="margin-bottom:0;"></select>
+                    <select id="singleSem" class="select-input" style="margin-bottom:0;">
+                        <option value="1st Semester">1st Sem</option>
+                        <option value="2nd Semester">2nd Sem</option>
+                    </select>
+                </div>
+
+                <textarea id="singleComment" class="textarea-input" placeholder="Test individual student comments here for RoBERTa diagnostic attribution & -1, 0, 1 token weights..."></textarea>
+                <button class="btn-action" onclick="submitSingleFeedback()">Run Test Diagnostic</button>
+            </section>
+            {% endif %}
+
+            <!-- Multi-Dimensional Scorecard -->
+            <section class="panel" id="scorecardPanelTarget">
+                <div class="panel-heading">
+                    <span>Multi-Dimensional Aspect Scorecard</span>
+                    <span style="font-size:0.75rem; color:var(--text-muted);" id="currentDeptLabel">
+                        {% if role == 'MISD' %}ALL DEPARTMENTS{% else %}{{ user_dept }} — {{ user_program }}{% endif %}
+                    </span>
+                </div>
+                <div class="charts-double" {% if role != 'MISD' %}style="grid-template-columns: 1fr 1fr; max-width: 860px; margin: 0 auto;"{% endif %}>
+                    <div class="chart-box">
+                        <img id="pieChartImg" src="" alt="Polarity Doughnut Chart">
+                    </div>
+                    <div class="chart-box">
+                        <img id="aspectBarImg" src="" alt="Aspect Breakdown Bar Chart">
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Attributed Data Logs with Pagination & Search Bar -->
+        <section class="panel" id="logsPanelTarget">
+            <div class="table-toolbar">
+                <div class="panel-heading" style="margin-bottom:0;">
+                    <span>Attributed Student Evaluation Records (Click row to inspect algorithm)</span>
+                </div>
+
+                <!-- Live Keyword Search Bar -->
+                <div class="search-input-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="searchInput" placeholder="Search narrative keywords or program..." oninput="onSearchInput(this.value)">
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:9%;">Dept</th>
+                            <th style="width:13%;">Program / Term</th>
+                            <th style="width:32%;">Student Narrative</th>
+                            <th style="width:10%;">Polarity</th>
+                            <th style="width:36%;">Aspects & Word Impact Scaling (-1, 0, 1)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logsTableBody"></tbody>
+                </table>
+            </div>
+
+            <!-- Server-Side Pagination Controller -->
+            <div class="pagination-bar">
+                <span id="pageSummary">Showing 0 to 0 of 0 records</span>
+                <div class="pagination-controls">
+                    <button class="btn-page" id="btnPrevPage" onclick="changePage(-1)" disabled>❮ Previous</button>
+                    <span id="pageIndicator" style="font-weight: 600; color: var(--text-title); padding: 0 4px;">Page 1 of 1</span>
+                    <button class="btn-page" id="btnNextPage" onclick="changePage(1)" disabled>Next ❯</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        history.pushState(null, document.title, location.href);
+        window.addEventListener('popstate', function () {
+            history.pushState(null, document.title, location.href);
+            showToast("Active portal session locked. Please use 'Sign Out' to terminate your session.");
+        });
+
+        window.addEventListener('pageshow', function (event) {
+            if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+                window.location.reload();
+            }
+        });
+
+        const userRole = "{{ role }}";
+        let currentDepartment = "{{ 'ALL' if role == 'MISD' else user_dept }}";
+        let currentPage = 1;
+        const perPage = 10;
+        let currentSearch = "";
+        let searchDebounceTimer = null;
+        let cachedYears = ["2024-2025", "2025-2026", "2026-2027"];
+        let feedbackLogsCache = [];
+
+        function showLoader(message = "Processing ABSA Pipeline...") {
+            document.getElementById('loaderText').innerText = message;
+            document.getElementById('loader').style.display = 'flex';
+        }
+        function hideLoader() {
+            document.getElementById('loader').style.display = 'none';
+        }
+
+        function openLogoutModal() { document.getElementById('logoutModal').style.display = 'flex'; }
+        function closeLogoutModal() { document.getElementById('logoutModal').style.display = 'none'; }
+        function confirmLogout() {
+            closeLogoutModal();
+            showLoader("Terminating session and signing out...");
+            window.location.href = "{{ url_for('logout') }}";
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.style.display = 'block';
+            setTimeout(() => { t.style.display = 'none'; }, 3500);
+        }
+
+        function openAddYearModal() {
+            if (userRole !== 'MISD') return;
+            const m = document.getElementById('addYearModal');
+            if (m) {
+                document.getElementById('newYearInput').value = '';
+                m.style.display = 'flex';
+            }
+        }
+        function closeAddYearModal() {
+            const m = document.getElementById('addYearModal');
+            if (m) m.style.display = 'none';
+        }
+
+        async function submitNewYear() {
+            if (userRole !== 'MISD') return;
+            const val = document.getElementById('newYearInput').value.trim();
+            if (!val) return showToast("Please input an academic year.");
+
+            showLoader("Registering new academic year...");
+            try {
+                const res = await fetch('/api/academic_years', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ year: val })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    closeAddYearModal();
+                    showToast(`Academic Year ${val} successfully added.`);
+                    fetchAnalytics();
+                } else {
+                    showToast(data.error || "Failed to add academic year.");
+                }
+            } catch (e) {
+                showToast("Server error registering academic year.");
+            } finally {
+                hideLoader();
+            }
+        }
+
+        function updateYearDropdowns(yearsList, selectedYear) {
+            cachedYears = yearsList;
+
+            const filterElem = document.getElementById('filterYear');
+            const prevSelected = selectedYear || (filterElem ? filterElem.value : 'ALL');
+
+            let filterHTML = '<option value="ALL">All Academic Years</option>';
+            yearsList.forEach(yr => {
+                const isSel = (yr === prevSelected) ? 'selected' : '';
+                filterHTML += `<option value="${yr}" ${isSel}>A.Y. ${yr}</option>`;
+            });
+            if (filterElem) filterElem.innerHTML = filterHTML;
+
+            const csvYearElem = document.getElementById('csvYear');
+            if (csvYearElem) {
+                let csvHTML = '';
+                yearsList.forEach(yr => {
+                    csvHTML += `<option value="${yr}">A.Y. ${yr}</option>`;
+                });
+                csvYearElem.innerHTML = csvHTML;
+            }
+
+            const singleYearElem = document.getElementById('singleYear');
+            if (singleYearElem) {
+                let singleHTML = '';
+                yearsList.forEach(yr => {
+                    singleHTML += `<option value="${yr}">${yr}</option>`;
+                });
+                singleYearElem.innerHTML = singleHTML;
+            }
+        }
+
+        function switchDepartment(dept, btn) {
+            currentDepartment = dept;
+            currentPage = 1;
+            document.querySelectorAll('.dept-tab').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('currentDeptLabel').innerText = dept + " METRICS";
+            fetchAnalytics();
+        }
+
+        function onFilterChange() {
+            currentPage = 1;
+            fetchAnalytics();
+        }
+
+        function onSearchInput(val) {
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(() => {
+                currentSearch = val.trim();
+                currentPage = 1;
+                fetchAnalytics();
+            }, 300);
+        }
+
+        function changePage(delta) {
+            currentPage += delta;
+            fetchAnalytics();
+        }
+
+        async function fetchAnalytics() {
+            try {
+                const yearElem = document.getElementById('filterYear');
+                const semElem = document.getElementById('filterSem');
+
+                const year = yearElem ? yearElem.value : 'ALL';
+                const sem = semElem ? semElem.value : 'ALL';
+
+                const params = new URLSearchParams({
+                    department: currentDepartment,
+                    year: year,
+                    semester: sem,
+                    search: currentSearch,
+                    page: currentPage,
+                    per_page: perPage
+                });
+
+                const res = await fetch(`/api/analytics?${params.toString()}`);
+                const data = await res.json();
+
+                feedbackLogsCache = data.logs || [];
+
+                if (data.available_years && data.available_years.length > 0) {
+                    updateYearDropdowns(data.available_years, data.year);
+                }
+
+                document.getElementById('kpi-total').innerText = data.kpis.total;
+                document.getElementById('kpi-pos').innerText = data.kpis.pos;
+                document.getElementById('kpi-neg').innerText = data.kpis.neg;
+                document.getElementById('kpi-neu').innerText = data.kpis.neu;
+
+                const pTag = document.getElementById('prescriptiveTag');
+                const pText = document.getElementById('prescriptiveText');
+                if (data.insights && data.insights.length > 0) {
+                    const top = data.insights[0];
+                    pTag.innerText = top.level;
+                    pTag.className = 'alert-tag ' + (top.level.includes('Alert') || top.level.includes('Warning') ? 'alert-tag-critical' : 'alert-tag-stable');
+                    pText.innerHTML = `<strong>${top.aspect}:</strong> ${top.recommendation}`;
+                }
+
+                const pieImg = document.getElementById('pieChartImg');
+                if (data.pie_chart) {
+                    pieImg.src = 'data:image/png;base64,' + data.pie_chart;
+                    pieImg.style.display = 'block';
+                }
+
+                const barImg = document.getElementById('aspectBarImg');
+                if (data.aspect_chart) {
+                    barImg.src = 'data:image/png;base64,' + data.aspect_chart;
+                    barImg.style.display = 'block';
+                }
+
+                renderLogs(data.logs);
+                updatePaginationControls(data.pagination);
+            } catch (err) {
+                console.error("Failed to load analytics:", err);
+            }
+        }
+
+        function updatePaginationControls(p) {
+            currentPage = p.page;
+            const startRecord = p.total_items === 0 ? 0 : (p.page - 1) * p.per_page + 1;
+            const endRecord = Math.min(p.page * p.per_page, p.total_items);
+
+            document.getElementById('pageSummary').innerText = `Showing ${startRecord} to ${endRecord} of ${p.total_items} records`;
+            document.getElementById('pageIndicator').innerText = `Page ${p.page} of ${p.total_pages}`;
+
+            document.getElementById('btnPrevPage').disabled = (p.page <= 1);
+            document.getElementById('btnNextPage').disabled = (p.page >= p.total_pages);
+        }
+
+        function renderLogs(logs) {
+            const tbody = document.getElementById('logsTableBody');
+            tbody.innerHTML = '';
+            if (!logs || logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:30px;">No records match your selected filters or search keyword.</td></tr>';
+                return;
+            }
+            logs.forEach(item => {
+                let aspectsHTML = '';
+                item.aspects.forEach((a, aIdx) => {
+                    let activeChips = '';
+                    let neutralCount = 0;
+                    let neutralChips = '';
+
+                    if (a.token_scores && a.token_scores.length > 0) {
+                        a.token_scores.forEach(tok => {
+                            let signLabel = tok.final_score > 0 ? `+${tok.final_score}` : (tok.final_score < 0 ? `${tok.final_score}` : '0');
+
+                            if (tok.role.includes('Positive')) {
+                                activeChips += `<span class="token-chip token-pos" title="${tok.role}">${tok.word} (${signLabel})</span>`;
+                            } else if (tok.role.includes('Negative')) {
+                                activeChips += `<span class="token-chip token-neg" title="${tok.role}">${tok.word} (${signLabel})</span>`;
+                            } else if (tok.role.includes('Intensifier')) {
+                                activeChips += `<span class="token-chip token-amp" title="${tok.role}">${tok.word} (${signLabel})</span>`;
+                            } else if (tok.role.includes('Negator') || tok.role.includes('Sarcasm')) {
+                                activeChips += `<span class="token-chip token-inv" title="${tok.role}">${tok.word}</span>`;
+                            } else {
+                                neutralCount++;
+                                neutralChips += `<span class="token-chip token-neu">${tok.word}</span> `;
+                            }
+                        });
+                    }
+
+                    const neutralToggleId = `neu_${item.id}_${aIdx}`;
+
+                    aspectsHTML += `
+                        <div style="background:rgba(255,255,255,0.02); border-left:3px solid #3b82f6; padding:8px 12px; margin-bottom:8px; border-radius:6px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                                <strong style="font-size:0.78rem; color:var(--text-title);">${a.aspect}</strong>
+                                <span class="badge badge-${a.polarity}">${a.polarity}</span>
+                            </div>
+                            <div style="font-size:0.82rem; color:var(--text-body); margin-bottom:6px; font-style:italic;">"${a.clause}"</div>
+                            
+                            <div class="token-chip-container">
+                                ${activeChips ? activeChips : '<span style="font-size:0.7rem; color:var(--text-muted);">No sentiment tokens (RoBERTa inference baseline)</span>'}
+                            </div>
+
+                            ${neutralCount > 0 ? `
+                                <div style="margin-top:5px; font-size:0.68rem;">
+                                    <span onclick="const el = document.getElementById('${neutralToggleId}'); el.style.display = el.style.display === 'none' ? 'flex' : 'none';" 
+                                          style="color:var(--text-muted); cursor:pointer; text-decoration:underline;">
+                                        ${neutralCount} neutral tokens omitted (toggle)
+                                    </span>
+                                    <div id="${neutralToggleId}" class="token-chip-container" style="display:none; margin-top:4px;">
+                                        ${neutralChips}
+                                    </div>
+                                </div>
+                            ` : ''}
+
+                            <div style="font-size:0.68rem; color:var(--text-muted); margin-top:6px; border-top:1px solid rgba(255,255,255,0.05); padding-top:4px;">
+                                Net Impact: <strong style="color:var(--text-title);">${a.lexical_score !== undefined ? a.lexical_score : 0}</strong> | RoBERTa Conf: <strong>${a.score}</strong>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                const tr = document.createElement('tr');
+                tr.onclick = () => openAlgorithmInspector(item.id);
+                tr.innerHTML = `
+                    <td><strong style="color:var(--text-title);">${item.department}</strong></td>
+                    <td style="color:var(--text-muted); font-size:0.74rem;">
+                        <strong style="color:var(--text-body);">${item.program}</strong><br>
+                        ${item.academic_year || '2025-2026'}<br>
+                        ${item.semester || '1st Sem'}
+                    </td>
+                    <td style="color:var(--text-body); font-size:0.84rem;">"${item.raw_text}"</td>
+                    <td><span class="badge badge-${item.sentiment}">${item.sentiment}</span></td>
+                    <td>${aspectsHTML}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function openAlgorithmInspector(logId) {
+            const log = feedbackLogsCache.find(l => l.id === logId);
+            if (!log) return;
+
+            document.getElementById('modalFeedbackRaw').innerText = `"${log.raw_text}"`;
+            document.getElementById('modalDeptBadge').innerText = log.department;
+            
+            const sentBadge = document.getElementById('modalSentimentBadge');
+            sentBadge.innerText = log.sentiment;
+            sentBadge.className = `badge badge-${log.sentiment}`;
+            
+            document.getElementById('modalConfidenceBadge').innerText = `Confidence: ${Math.round(log.confidence * 100)}%`;
+
+            const tokenContainer = document.getElementById('modalTokenWeightsContainer');
+            tokenContainer.innerHTML = '';
+            
+            const clauseContainer = document.getElementById('modalClauseBreakdown');
+            clauseContainer.innerHTML = '';
+
+            let allTokens = [];
+            if (log.aspects && log.aspects.length > 0) {
+                log.aspects.forEach(item => {
+                    if (item.token_scores) {
+                        item.token_scores.forEach(t => allTokens.push(t));
+                    }
+
+                    const clauseRow = document.createElement('div');
+                    clauseRow.style.cssText = "background:rgba(255,255,255,0.02); padding:8px 12px; border-radius:6px; border:1px solid var(--border-light); font-size:0.82rem;";
+                    clauseRow.innerHTML = `<strong>Aspect: [${item.aspect}]</strong><br>Clause: "${item.clause}" &bull; <span class="badge badge-${item.polarity}">${item.polarity}</span> <span style="color:var(--text-muted); font-size:0.75rem;">(${item.explanation || ''})</span>`;
+                    clauseContainer.appendChild(clauseRow);
+                });
+            }
+
+            if (allTokens.length > 0) {
+                allTokens.forEach(t => {
+                    const chip = document.createElement('span');
+                    let cls = 'token-neu';
+                    if (t.final_score > 0) cls = 'token-pos';
+                    else if (t.final_score < 0) cls = 'token-neg';
+                    else if (t.role.includes('Intensifier')) cls = 'token-amp';
+                    else if (t.role.includes('Negator') || t.role.includes('Sarcasm')) cls = 'token-inv';
+
+                    chip.className = `token-chip ${cls}`;
+                    let signLabel = t.final_score > 0 ? `+${t.final_score}` : `${t.final_score}`;
+                    chip.innerHTML = `<span>${t.word}</span> <span style="font-size:0.64rem; opacity:0.85;">(${signLabel})</span>`;
+                    tokenContainer.appendChild(chip);
+                });
+            } else {
+                tokenContainer.innerHTML = '<span style="color:var(--text-muted); font-size:0.8rem;">No token weight breakdown recorded for this entry.</span>';
+            }
+
+            const actionBox = document.getElementById('modalPrescriptiveAction');
+            if (log.sentiment === 'Negative') {
+                actionBox.innerHTML = `<strong>Required Administrative Action:</strong> Elevated grievance detected in <strong>${log.department}</strong>. Department Chair and General Services must review this feedback immediately, investigate classroom or laboratory conditions, and log an official resolution note in the portal.`;
+            } else if (log.sentiment === 'Positive') {
+                actionBox.innerHTML = `<strong>Institutional Recognition:</strong> Positive commendation recorded. Highlight this instructional delivery or facility standard during the next department meeting as a benchmark for institutional quality assurance.`;
+            } else {
+                actionBox.innerHTML = `<strong>Informational Baseline:</strong> Neutral observation recorded. Monitor ongoing student engagement trends across this course section.`;
+            }
+
+            document.getElementById('algorithmModal').style.display = 'flex';
+        }
+
+        function closeAlgorithmModal() {
+            document.getElementById('algorithmModal').style.display = 'none';
+        }
+
+        async function submitSingleFeedback() {
+            if (userRole !== 'MISD') return;
+            const commentInput = document.getElementById('singleComment');
+            const deptInput = document.getElementById('singleDept');
+            const yearInput = document.getElementById('singleYear');
+            const semInput = document.getElementById('singleSem');
+            if (!commentInput) return;
+
+            const comment = commentInput.value.trim();
+            const department = deptInput ? deptInput.value : "DCI";
+            const academic_year = yearInput ? yearInput.value : "2025-2026";
+            const semester = semInput ? semInput.value : "1st Semester";
+
+            if (!comment) return showToast("Please input a narrative first.");
+
+            showLoader("Running Token Impact & RoBERTa Diagnostic Attribution...");
+
+            try {
+                const res = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ comment, department, academic_year, semester })
+                });
+                if (res.ok) {
+                    commentInput.value = '';
+                    showToast("Diagnostic feedback stored.");
+                    fetchAnalytics();
+                } else {
+                    showToast("Analysis failed.");
+                }
+            } catch (e) {
+                showToast("Server communication error.");
+            } finally {
+                hideLoader();
+            }
+        }
+
+        function openCsvModal() {
+            if (userRole !== 'MISD') return;
+            const modal = document.getElementById('csvModal');
+            if (modal) modal.style.display = 'flex';
+        }
+
+        function closeCsvModal() {
+            const modal = document.getElementById('csvModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        async function submitCsv() {
+            if (userRole !== 'MISD') return;
+            const fileInput = document.getElementById('csvFileInput');
+            const deptElem = document.getElementById('csvDept');
+            const yearElem = document.getElementById('csvYear');
+            const semElem = document.getElementById('csvSem');
+
+            const dept = deptElem ? deptElem.value : "DCI";
+            const year = yearElem ? yearElem.value : "2025-2026";
+            const sem = semElem ? semElem.value : "1st Semester";
+
+            if (!fileInput || !fileInput.files.length) return showToast("Please choose a CSV file.");
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('department', dept);
+            formData.append('academic_year', year);
+            formData.append('semester', sem);
+
+            closeCsvModal();
+            showLoader("Ingesting semester survey batch via RoBERTa & Lexicon model...");
+
+            try {
+                const res = await fetch('/api/upload_csv', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(`Batch completed! Processed ${data.processed} rows.`);
+                    fileInput.value = '';
+                    fetchAnalytics();
+                } else {
+                    showToast(data.error || "Batch ingestion failed.");
+                }
+            } catch (e) {
+                showToast("Error processing CSV.");
+            } finally {
+                hideLoader();
+            }
+        }
+
+        function openLexiconModal() {
+            if (userRole !== 'MISD') return;
+            const modal = document.getElementById('lexiconModal');
+            if (modal) {
+                modal.style.display = 'flex';
+                fetchLexicon();
+            }
+        }
+
+        function closeLexiconModal() {
+            const modal = document.getElementById('lexiconModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        async function fetchLexicon() {
+            if (userRole !== 'MISD') return;
+            try {
+                const res = await fetch('/api/lexicon');
+                const data = await res.json();
+                const tbody = document.getElementById('lexiconTableBody');
+                if (!tbody) return;
+                tbody.innerHTML = '';
+                data.forEach(t => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td style="color:var(--text-title);">${t.word}</td>
+                        <td><span class="badge badge-Neutral">${t.category}</span></td>
+                        <td><button onclick="deleteLexiconTerm(${t.id})" style="background:transparent; border:none; color:#fb7185; cursor:pointer; font-weight:600;">Delete</button></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                console.error("Failed to fetch lexicon:", err);
+            }
+        }
+
+        async function addLexiconTerm() {
+            if (userRole !== 'MISD') return;
+            const wordInput = document.getElementById('newWord');
+            const catInput = document.getElementById('newCategory');
+            if (!wordInput || !catInput) return;
+
+            const word = wordInput.value.trim();
+            const category = catInput.value;
+            if (!word) return;
+
+            showLoader("Updating Taglish slang dictionary...");
+
+            try {
+                const res = await fetch('/api/lexicon', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ word, category })
+                });
+                if (res.ok) {
+                    wordInput.value = '';
+                    fetchLexicon();
+                    showToast("Slang term registered in database.");
+                } else {
+                    const data = await res.json();
+                    showToast(data.error || "Failed to add term.");
+                }
+            } catch (err) {
+                showToast("Server communication error.");
+            } finally {
+                hideLoader();
+            }
+        }
+
+        async function deleteLexiconTerm(id) {
+            if (userRole !== 'MISD') return;
+            showLoader("Removing lexicon term...");
+            try {
+                const res = await fetch('/api/lexicon', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id })
+                });
+                if (res.ok) {
+                    fetchLexicon();
+                    showToast("Term removed.");
+                }
+            } catch (err) {
+                showToast("Server error.");
+            } finally {
+                hideLoader();
+            }
+        }
+
+        function exportCurrentCsv() {
+            const yearElem = document.getElementById('filterYear');
+            const semElem = document.getElementById('filterSem');
+            const year = yearElem ? yearElem.value : 'ALL';
+            const sem = semElem ? semElem.value : 'ALL';
+            window.location.href = `/api/export_csv?department=${currentDepartment}&year=${year}&semester=${sem}`;
+        }
+
+        // ==========================================
+        // SPOTLIGHT INTERACTIVE TUTORIAL CONFIGURATION
+        // ==========================================
+        const tutorialWidget = document.getElementById('tutorialWidget');
+        const tutorialHeader = document.getElementById('tutorialHeader');
+        let currentStep = 0;
+
+        const misdTutorialSteps = [
+            {
+                targetId: "deptFilterBarTarget",
+                title: "1. Campus Scoping & Clearance",
+                desc: "Switch between individual colleges or oversight. Use the Year and Semester dropdowns on the right to segment evaluations by academic term."
+            },
+            {
+                targetId: "prescriptiveBoxTarget",
+                title: "2. Prescriptive Quality Alerts",
+                desc: "Monitors negative feedback in real time. Grievances reaching 40% or higher trigger automatic administrative advisories."
+            },
+            {
+                targetId: "kpiRowTarget",
+                title: "3. Sentiment Aggregates",
+                desc: "Real-time summary cards displaying the total volume of positive, negative, and neutral student sentiments for the selected term."
+            },
+            {
+                targetId: "narrativePanelTarget",
+                title: "4. Diagnostic Sandbox",
+                desc: "Test individual student sentences to preview how the hybrid RoBERTa and -1, 0, 1 rule engine parses clauses and attributes polarity."
+            },
+            {
+                targetId: "scorecardPanelTarget",
+                title: "5. Aspect Scorecard & Visuals",
+                desc: "Review the overall polarity doughnut chart alongside the stacked aspect bar chart tracking Pedagogy, Demeanor, and Campus Facilities."
+            },
+            {
+                targetId: "logsPanelTarget",
+                title: "6. Search & Paginated Records",
+                desc: "Quickly filter feedback using the search bar. Records are paginated at 10 items per page with collapsible neutral tokens."
+            },
+            {
+                targetId: "navActionsTarget",
+                title: "7. Batch Ingestion & Slang Manager",
+                desc: "Ingest semester survey CSV files with designated Academic Years and Semesters, export clean data, or update campus slang terms."
+            }
+        ];
+
+        const facultyTutorialSteps = [
+            {
+                targetId: "deptFilterBarTarget",
+                title: "1. Departmental Scoping & Term Selection",
+                desc: "View evaluations filtered for your college. Use the Year and Semester selectors to review past semester performance."
+            },
+            {
+                targetId: "prescriptiveBoxTarget",
+                title: "2. Quality Advisory",
+                desc: "Actionable suggestions regarding pacing, instructional clarity, or syllabus alignment based on aggregated student feedback."
+            },
+            {
+                targetId: "kpiRowTarget",
+                title: "3. Feedback Distribution",
+                desc: "Review total praises, constructive grievances, and neutral feedback logged by students for your handled courses."
+            },
+            {
+                targetId: "scorecardPanelTarget",
+                title: "4. Multi-Dimensional Scorecard",
+                desc: "Visualizes performance breakdown across the three institutional pillars: Teaching Pedagogy, Faculty Approachability, and Facilities."
+            },
+            {
+                targetId: "logsPanelTarget",
+                title: "5. Feedback Search & Pagination",
+                desc: "Search specific topics or course titles. Records are neatly paginated so the page never over-stretches."
+            }
+        ];
+
+        const activeTutorial = (userRole === "MISD") ? misdTutorialSteps : facultyTutorialSteps;
+
+        function clearSpotlight() {
+            document.querySelectorAll('.tut-highlight').forEach(el => el.classList.remove('tut-highlight'));
+        }
+
+        function highlightTarget(targetId) {
+            clearSpotlight();
+            const elem = document.getElementById(targetId);
+            if (elem) {
+                elem.classList.add('tut-highlight');
+                elem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        function toggleTutorial() {
+            const isVisible = tutorialWidget.style.display === 'block';
+            if (isVisible) {
+                tutorialWidget.style.display = 'none';
+                clearSpotlight();
+            } else {
+                tutorialWidget.style.display = 'block';
+                currentStep = 0;
+                renderTutStep();
+            }
+        }
+
+        function renderTutStep() {
+            const step = activeTutorial[currentStep];
+            document.getElementById('tutStepCount').innerText = `STEP ${currentStep + 1} OF ${activeTutorial.length}`;
+            document.getElementById('tutStepTitle').innerText = step.title;
+            document.getElementById('tutStepDesc').innerText = step.desc;
+
+            document.getElementById('btnTutBack').style.visibility = (currentStep === 0) ? 'hidden' : 'visible';
+            document.getElementById('btnTutNext').innerText = (currentStep === activeTutorial.length - 1) ? 'Finish Tour' : 'Next Step';
+
+            highlightTarget(step.targetId);
+        }
+
+        function nextTutStep() {
+            if (currentStep < activeTutorial.length - 1) {
+                currentStep++;
+                renderTutStep();
+            } else {
+                toggleTutorial();
+            }
+        }
+
+        function prevTutStep() {
+            if (currentStep > 0) {
+                currentStep--;
+                renderTutStep();
+            }
+        }
+
+        let isDragging = false, offset = [0, 0];
+        tutorialHeader.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            offset = [tutorialWidget.offsetLeft - e.clientX, tutorialWidget.offsetTop - e.clientY];
+        });
+        document.addEventListener('mouseup', () => { isDragging = false; });
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                tutorialWidget.style.left = (e.clientX + offset[0]) + 'px';
+                tutorialWidget.style.top = (e.clientY + offset[1]) + 'px';
+                tutorialWidget.style.bottom = 'auto';
+                tutorialWidget.style.right = 'auto';
+            }
+        });
+
+        fetchAnalytics();
+    </script>
+</body>
+</html>
