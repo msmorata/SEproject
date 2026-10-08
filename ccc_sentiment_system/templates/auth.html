@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Institutional Authentication — City College of Calamba</title>
+    <style>
+        :root {
+            --bg-canvas: #060b19;
+            --surface-card: #0f1a30;
+            --surface-input: #070d1d;
+            --surface-input-focus: #0c152e;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --accent-gold: #f59e0b;
+            --accent-green: #10b981;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-light: rgba(255, 255, 255, 0.08);
+            --border-focus: rgba(37, 99, 235, 0.45);
+            --transition-smooth: all 0.55s cubic-bezier(0.77, 0, 0.175, 1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        
+        body {
+            background: radial-gradient(circle at top, #14234b 0%, var(--bg-canvas) 85%);
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            padding: 16px; overflow-x: hidden;
+        }
+
+        .auth-wrapper {
+            position: relative; width: 100%; max-width: 1060px; min-height: 640px;
+            background: var(--surface-card); border-radius: 20px; overflow: hidden;
+            box-shadow: 0 30px 70px -15px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(245, 158, 11, 0.18);
+        }
+
+        .form-container {
+            position: absolute; top: 0; height: 100%; width: 50%;
+            display: flex; flex-direction: column; justify-content: center;
+            padding: 26px 40px; transition: var(--transition-smooth);
+            background: var(--surface-card); z-index: 1; overflow-y: auto;
+        }
+
+        .sign-in-container { left: 0; z-index: 2; opacity: 1; }
+        .sign-up-container { left: 0; z-index: 1; opacity: 0; }
+
+        .auth-wrapper.right-panel-active .sign-in-container {
+            transform: translateX(100%); opacity: 0; pointer-events: none; z-index: 1;
+        }
+
+        .auth-wrapper.right-panel-active .sign-up-container {
+            transform: translateX(100%); opacity: 1; z-index: 5; pointer-events: all;
+        }
+
+        .form-title { font-size: 1.45rem; font-weight: 800; color: var(--text-main); margin-bottom: 2px; }
+        .form-subtitle { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 14px; }
+
+        .field-group { margin-bottom: 9px; text-align: left; }
+        .field-label { 
+            display: block; font-size: 0.68rem; font-weight: 700; color: var(--text-muted); 
+            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; 
+        }
+        
+        .input-control, .select-control {
+            width: 100%; padding: 8px 12px; background: var(--surface-input); border: 1.5px solid var(--border-light);
+            border-radius: 8px; font-size: 0.84rem; color: var(--text-main); outline: none; transition: 0.2s ease;
+        }
+        .input-control:focus, .select-control:focus {
+            border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25); background: var(--surface-input-focus);
+        }
+
+        /* 2-Column Row for Role & Department */
+        .compact-two-col {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 9px;
+        }
+
+        /* Password Field with Eye Toggle */
+        .password-box {
+            position: relative; display: flex; align-items: center; width: 100%;
+        }
+        .password-box input { padding-right: 36px; }
+        .btn-toggle-pwd {
+            position: absolute; right: 8px; background: transparent; border: none;
+            color: var(--text-muted); cursor: pointer; font-size: 0.95rem; padding: 4px;
+            display: inline-flex; align-items: center; justify-content: center;
+        }
+        .btn-toggle-pwd:hover { color: var(--text-main); }
+
+        .domain-hint-pill {
+            display: inline-flex; align-items: center; gap: 4px; font-size: 0.67rem;
+            color: #60a5fa; margin-top: 3px;
+        }
+
+        .program-row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+        .btn-remove-program {
+            background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.3);
+            color: #fb7185; border-radius: 6px; width: 32px; height: 34px; cursor: pointer;
+            font-weight: bold; display: inline-flex; align-items: center; justify-content: center;
+        }
+        .btn-remove-program:hover { background: rgba(244, 63, 94, 0.3); }
+
+        .btn-add-course {
+            background: transparent; border: 1px dashed rgba(245, 158, 11, 0.4);
+            color: #fbbf24; padding: 4px 10px; border-radius: 6px; font-size: 0.72rem;
+            font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;
+            margin-top: 2px; margin-bottom: 6px; transition: 0.2s ease;
+        }
+        .btn-add-course:hover { background: rgba(245, 158, 11, 0.1); border-color: #fbbf24; }
+
+        .btn-action {
+            width: 100%; padding: 10px; background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white; border: none; border-radius: 8px; font-size: 0.88rem; font-weight: 700;
+            cursor: pointer; transition: transform 0.2s ease; margin-top: 6px;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.35);
+        }
+        .btn-action-green {
+            background: linear-gradient(135deg, #10b981, #059669);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);
+        }
+        .btn-action:hover { transform: translateY(-1px); filter: brightness(1.1); }
+
+        .overlay-container {
+            position: absolute; top: 0; left: 50%; width: 50%; height: 100%;
+            overflow: hidden; transition: var(--transition-smooth); z-index: 100;
+        }
+        .auth-wrapper.right-panel-active .overlay-container { transform: translateX(-100%); }
+
+        .overlay {
+            background: linear-gradient(135deg, #071536 0%, #0d286d 50%, #1e3a8a 100%);
+            position: relative; left: -100%; height: 100%; width: 200%;
+            transform: translateX(0); transition: var(--transition-smooth);
+        }
+        .auth-wrapper.right-panel-active .overlay { transform: translateX(50%); }
+
+        .overlay-panel {
+            position: absolute; top: 0; height: 100%; width: 50%;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 0 40px; text-align: center; color: white;
+            transition: var(--transition-smooth);
+        }
+        .overlay-left { left: 0; transform: translateX(-20%); }
+        .auth-wrapper.right-panel-active .overlay-left { transform: translateX(0); }
+        .overlay-right { right: 0; transform: translateX(0); }
+        .auth-wrapper.right-panel-active .overlay-right { transform: translateX(20%); }
+
+        .auth-logo {
+            width: 80px; height: 80px; object-fit: contain; margin-bottom: 12px;
+            filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.65));
+        }
+
+        .overlay-title { font-size: 1.75rem; font-weight: 800; line-height: 1.25; margin-bottom: 10px; }
+        .overlay-desc { font-size: 0.85rem; color: #cbd5e1; line-height: 1.55; margin-bottom: 18px; max-width: 320px; }
+
+        .btn-ghost {
+            background: rgba(255, 255, 255, 0.08); border: 1.5px solid rgba(255, 255, 255, 0.35);
+            color: white; padding: 9px 24px; border-radius: 9999px; font-size: 0.82rem; font-weight: 600;
+            cursor: pointer; transition: 0.2s ease; backdrop-filter: blur(5px);
+        }
+        .btn-ghost:hover { background: white; color: #071536; }
+
+        .brand-pill {
+            display: inline-flex; align-items: center; gap: 6px; background: rgba(245, 158, 11, 0.15);
+            padding: 4px 12px; border-radius: 9999px; font-size: 0.7rem; font-weight: 800;
+            color: #fbbf24; letter-spacing: 0.5px; border: 1px solid rgba(245, 158, 11, 0.3); text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        .alert-error {
+            padding: 8px 12px; border-radius: 8px; font-size: 0.78rem; margin-bottom: 10px;
+            background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.3); color: #fb7185;
+        }
+        .alert-flash {
+            padding: 8px 12px; border-radius: 8px; font-size: 0.78rem; margin-bottom: 10px;
+            background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399;
+        }
+
+        /* Centered Verification Sheet */
+        .verification-card {
+            position: absolute; inset: 0; background: var(--surface-card); z-index: 200;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 24px; text-align: center;
+        }
+        .otp-input {
+            letter-spacing: 10px; font-size: 1.85rem; font-weight: 800; text-align: center;
+            width: 250px; padding: 10px; margin: 14px 0; background: var(--surface-input); border: 2px solid var(--primary);
+            border-radius: 12px; color: #f8fafc; outline: none; box-shadow: 0 0 20px rgba(37, 99, 235, 0.25);
+        }
+        .otp-input:focus { border-color: #60a5fa; box-shadow: 0 0 25px rgba(37, 99, 235, 0.45); }
+
+        .btn-link-resend {
+            background: transparent; border: none; color: #60a5fa; cursor: pointer; font-size: 0.78rem; font-weight: 600; text-decoration: underline; margin-top: 8px;
+        }
+        .btn-link-resend:hover { color: #93c5fd; }
+
+        @media (max-width: 768px) {
+            .auth-wrapper { min-height: 580px; }
+            .overlay-container { display: none; }
+            .form-container { width: 100%; padding: 24px 18px; }
+            .compact-two-col { grid-template-columns: 1fr; gap: 0; }
+            .sign-up-container { display: none; }
+            .auth-wrapper.right-panel-active .sign-in-container { display: none; }
+            .auth-wrapper.right-panel-active .sign-up-container { display: flex; transform: none; opacity: 1; }
+            .mobile-toggle { display: block !important; margin-top: 12px; text-align: center; font-size: 0.8rem; color: var(--text-muted); }
+            .mobile-toggle span { color: var(--primary); font-weight: 700; cursor: pointer; }
+        }
+        .mobile-toggle { display: none; }
+    </style>
+</head>
+<body>
+    <div class="auth-wrapper {% if mode == 'signup' %}right-panel-active{% endif %}" id="authWrapper">
+        
+        <!-- Verification Step Overlay -->
+        {% if mode == 'verify' %}
+        <div class="verification-card">
+            <img src="{{ url_for('static', filename='ccclogo.png') }}" alt="CCC Emblem" style="width: 65px; height: 65px; object-fit: contain; margin-bottom: 8px;">
+            <span class="brand-pill">Security Authenticator</span>
+            <h2 class="form-title" style="font-size: 1.35rem;">Confirm Registration</h2>
+            <p class="form-subtitle" style="margin-bottom: 10px;">Enter the 6-digit confirmation code sent to<br><strong style="color:var(--text-main);">{{ email }}</strong></p>
+
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert-flash" style="max-width: 300px;">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            {% if error %}
+                <div class="alert-error" style="width: 250px;">{{ error }}</div>
+            {% endif %}
+
+            <form method="POST" action="{{ url_for('verify_code') }}">
+                <!-- CSRF Token injected for security -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="email" value="{{ email }}">
+                <input type="text" name="code" class="otp-input" maxlength="6" pattern="\d{6}" placeholder="000000" required autofocus autocomplete="one-time-code">
+                <button type="submit" class="btn-action" style="width: 250px;">Confirm & Activate Account</button>
+            </form>
+
+            <form method="POST" action="{{ url_for('resend_code') }}" style="margin-top: 4px;">
+                <!-- CSRF Token injected for security -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="email" value="{{ email }}">
+                <button type="submit" class="btn-link-resend">Didn't receive code? Resend email</button>
+            </form>
+
+            <div style="margin-top: 12px;">
+                <a href="{{ url_for('login') }}" style="color: var(--text-muted); font-size: 0.78rem; text-decoration: none;">Return to Sign In</a>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Registration Form -->
+        <div class="form-container sign-up-container">
+            <form method="POST" action="{{ url_for('signup') }}" id="signupForm">
+                <!-- CSRF Token injected for security -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <h2 class="form-title">Create Account</h2>
+                <p class="form-subtitle">Register institutional student or faculty credentials</p>
+
+                {% if error and mode == 'signup' %}
+                    <div class="alert-error">{{ error }}</div>
+                {% endif %}
+
+                <div class="field-group">
+                    <label class="field-label">Institutional Username</label>
+                    <input type="text" name="username" class="input-control" placeholder="e.g., jdelacruz" required autocomplete="off">
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label">Institutional Email</label>
+                    <input type="email" name="email" class="input-control" placeholder="username@ccc.edu.ph" required autocomplete="off">
+                    <div class="domain-hint-pill">
+                        <span>ℹ️</span> <span>Permitted domains: <strong>@ccc.edu.ph</strong> or <strong>@gmail.com</strong> (testing)</span>
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label">Password</label>
+                    <div class="password-box">
+                        <input type="password" name="password" id="signupPassword" class="input-control" placeholder="••••••••••••" required>
+                        <button type="button" class="btn-toggle-pwd" onclick="togglePasswordVisibility('signupPassword', this)" title="Show/Hide password">👁️</button>
+                    </div>
+                </div>
+
+                <!-- 2-Column Compact Row: Role + Department -->
+                <div class="compact-two-col">
+                    <div id="roleGroup">
+                        <label class="field-label">Role Classification</label>
+                        <select name="role" id="roleSelect" class="select-control" onchange="onRoleOrDeptChanged()" required>
+                            <option value="Student - Regular" selected>Regular Student</option>
+                            <option value="Student - Class Representative">Class Representative</option>
+                            <option value="Student - Officer">Student Officer</option>
+                            <option value="Faculty">Faculty Member</option>
+                        </select>
+                    </div>
+
+                    <!-- Hardlocked to DCI and MISD -->
+                    <div>
+                        <label class="field-label">College / Department</label>
+                        <select name="department" id="deptSelect" class="select-control" onchange="onDepartmentChanged()" required>
+                            <option value="DCI" selected>Department of Computing and Informatics (DCI)</option>
+                            <option value="MISD">MISD (Admin)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="field-group" id="programGroup">
+                    <label class="field-label" id="progGroupLabel">Enrolled Degree Program</label>
+                    <div id="programSelectsContainer"></div>
+                    <button type="button" id="btnAddCourse" class="btn-add-course" onclick="addProgramDropdown()">
+                        + Add Another Handled Course
+                    </button>
+                </div>
+
+                <button type="submit" class="btn-action btn-action-green">Send Authenticator Code</button>
+
+                <div class="mobile-toggle">
+                    Already verified? <span onclick="togglePanels(false)">Sign In</span>
+                </div>
+            </form>
+        </div>
+
+        <!-- Login Form -->
+        <div class="form-container sign-in-container">
+            <form method="POST" action="{{ url_for('login') }}">
+                <!-- CSRF Token injected for security -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <h2 class="form-title">Portal Access</h2>
+                <p class="form-subtitle">City College of Calamba Sentiment System</p>
+
+                {% with messages = get_flashed_messages() %}
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert-flash">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                {% if error and mode != 'signup' and mode != 'verify' %}
+                    <div class="alert-error">{{ error }}</div>
+                {% endif %}
+
+                <div class="field-group">
+                    <label class="field-label">Username or Email Address</label>
+                    <input type="text" name="username" class="input-control" placeholder="username@ccc.edu.ph" required autocomplete="off">
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label">Secure Password</label>
+                    <div class="password-box">
+                        <input type="password" name="password" id="loginPassword" class="input-control" placeholder="••••••••••••" required>
+                        <button type="button" class="btn-toggle-pwd" onclick="togglePasswordVisibility('loginPassword', this)" title="Show/Hide password">👁️</button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-action">Authorize & Enter Portal</button>
+
+                <div class="mobile-toggle">
+                    New evaluator or student? <span onclick="togglePanels(true)">Sign Up</span>
+                </div>
+            </form>
+        </div>
+
+        <!-- Overlay Sliding Panel -->
+        <div class="overlay-container">
+            <div class="overlay">
+                <div class="overlay-panel overlay-left">
+                    <img src="{{ url_for('static', filename='ccclogo.png') }}" alt="City College of Calamba" class="auth-logo">
+                    <span class="brand-pill">City College of Calamba</span>
+                    <h2 class="overlay-title">Already Enrolled?</h2>
+                    <p class="overlay-desc">Sign in with your verified institutional account to access student evaluations, sentiment insights, or administrative tools.</p>
+                    <button class="btn-ghost" onclick="togglePanels(false)">Sign In Instead</button>
+                </div>
+
+                <div class="overlay-panel overlay-right">
+                    <img src="{{ url_for('static', filename='ccclogo.png') }}" alt="City College of Calamba" class="auth-logo">
+                    <span class="brand-pill">Institutional ABSA</span>
+                    <h2 class="overlay-title">Student & Faculty Portal</h2>
+                    <p class="overlay-desc">Register with your institutional email. Class representatives and officers can publish custom event forms, while students submit real-time evaluations.</p>
+                    <button class="btn-ghost" onclick="togglePanels(true)">Register Account</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const wrapper = document.getElementById('authWrapper');
+        function togglePanels(isSignUp) {
+            if (isSignUp) wrapper.classList.add('right-panel-active');
+            else wrapper.classList.remove('right-panel-active');
+        }
+
+        function togglePasswordVisibility(fieldId, btn) {
+            const input = document.getElementById(fieldId);
+            if (!input) return;
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.innerText = '🙈';
+            } else {
+                input.type = 'password';
+                btn.innerText = '👁️';
+            }
+        }
+
+        // Hardlocked exactly to DCI Programs and MISD empty
+        const programsByDept = {
+            "DCI": [
+                "Bachelor of Science in Computer Science (BSCS)",
+                "Bachelor of Science in Information Technology (BSIT)",
+                "Associate in Computer Technology (ACT)"
+            ],
+            "MISD": []
+        };
+
+        function onDepartmentChanged() {
+            const dept = document.getElementById('deptSelect').value;
+            const roleGroup = document.getElementById('roleGroup');
+            const roleSelect = document.getElementById('roleSelect');
+
+            if (dept === 'MISD') {
+                roleGroup.style.display = 'none';
+            } else {
+                roleGroup.style.display = 'block';
+                if (roleSelect.value === 'MISD') {
+                    roleSelect.value = 'Student - Regular';
+                }
+            }
+
+            const container = document.getElementById('programSelectsContainer');
+            container.innerHTML = '';
+            addProgramDropdown();
+            onRoleOrDeptChanged();
+        }
+
+        function onRoleOrDeptChanged() {
+            const dept = document.getElementById('deptSelect').value;
+            const role = document.getElementById('roleSelect').value;
+            const progGroup = document.getElementById('programGroup');
+            const progLabel = document.getElementById('progGroupLabel');
+            const addBtn = document.getElementById('btnAddCourse');
+            const container = document.getElementById('programSelectsContainer');
+
+            if (dept === 'MISD') {
+                progGroup.style.display = 'none';
+                return;
+            } else {
+                progGroup.style.display = 'block';
+            }
+
+            const isStudent = role.startsWith('Student');
+
+            if (isStudent) {
+                progLabel.innerText = "Enrolled Degree Program";
+                while (container.children.length > 1) {
+                    container.removeChild(container.lastChild);
+                }
+                if (addBtn) addBtn.style.display = 'none';
+            } else {
+                progLabel.innerText = "Assigned Program(s) Handled";
+                if (addBtn) addBtn.style.display = 'inline-flex';
+            }
+
+            refreshAllDropdownOptions();
+        }
+
+        function getSelectedPrograms() {
+            const selects = document.querySelectorAll('.prog-select-elem');
+            const selected = [];
+            selects.forEach(s => {
+                if (s.value) selected.push(s.value);
+            });
+            return selected;
+        }
+
+        function refreshAllDropdownOptions() {
+            const dept = document.getElementById('deptSelect').value;
+            const role = document.getElementById('roleSelect').value;
+            const fullList = programsByDept[dept] || [];
+            const selects = document.querySelectorAll('.prog-select-elem');
+            const addBtn = document.getElementById('btnAddCourse');
+            const isStudent = role.startsWith('Student');
+
+            if (dept === 'MISD') return;
+
+            const currentSelections = [];
+            selects.forEach(s => currentSelections.push(s.value));
+
+            selects.forEach((s, idx) => {
+                const currentVal = currentSelections[idx];
+                s.innerHTML = '';
+
+                fullList.forEach(opt => {
+                    const isPickedElsewhere = currentSelections.some((val, i) => i !== idx && val === opt);
+                    if (!isPickedElsewhere) {
+                        const optElem = document.createElement('option');
+                        optElem.value = opt;
+                        optElem.innerText = opt;
+                        if (opt === currentVal) optElem.selected = true;
+                        s.appendChild(optElem);
+                    }
+                });
+            });
+
+            if (isStudent) {
+                if (addBtn) addBtn.style.display = 'none';
+                return;
+            }
+
+            const distinctPicked = new Set(getSelectedPrograms());
+            if (distinctPicked.size >= fullList.length || fullList.length <= 1) {
+                if (addBtn) addBtn.style.display = 'none';
+            } else {
+                if (addBtn) addBtn.style.display = 'inline-flex';
+            }
+        }
+
+        function addProgramDropdown() {
+            const dept = document.getElementById('deptSelect').value;
+            const role = document.getElementById('roleSelect').value;
+            if (dept === 'MISD') return;
+
+            const container = document.getElementById('programSelectsContainer');
+            const isStudent = role.startsWith('Student');
+
+            if (isStudent && container.children.length >= 1) return;
+
+            const row = document.createElement('div');
+            row.className = 'program-row';
+
+            const select = document.createElement('select');
+            select.name = 'program';
+            select.className = 'select-control prog-select-elem';
+            select.required = true;
+            select.onchange = refreshAllDropdownOptions;
+
+            row.appendChild(select);
+
+            if (container.children.length > 0 && !isStudent) {
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'btn-remove-program';
+                removeBtn.innerText = '✕';
+                removeBtn.onclick = () => {
+                    container.removeChild(row);
+                    refreshAllDropdownOptions();
+                };
+                row.appendChild(removeBtn);
+            }
+
+            container.appendChild(row);
+            refreshAllDropdownOptions();
+        }
+
+        onDepartmentChanged();
+    </script>
+</body>
+</html>
