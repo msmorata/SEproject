@@ -1,0 +1,2476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- THEME BOOTSTRAP: runs before first paint so the saved theme is applied with no flash -->
+    <script>
+        (function () {
+            var t = 'dark';
+            try { var s = localStorage.getItem('ccc_theme'); if (s === 'light' || s === 'dark') t = s; } catch (e) {}
+            document.documentElement.setAttribute('data-theme', t);
+        })();
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Institutional Quality Assurance & Oversight — City College of Calamba</title>
+    <!-- CSRF Token injected for security -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    
+    <!-- UI/UX Polish: Inter Font for modern SaaS feel -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{{ asset_url('tour.css') }}">
+    <script src="{{ asset_url('tour.js') }}"></script>
+    <style>
+        :root {
+            --surface-ground: #040914; 
+            --surface-card: rgba(15, 26, 48, 0.65); 
+            --surface-card-hover: rgba(22, 36, 68, 0.85);
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --accent-gold: #f59e0b;
+            --text-title: #ffffff;
+            --text-body: #94a3b8;
+            --text-muted: #64748b;
+            --border-light: rgba(255, 255, 255, 0.06);
+            --badge-pos: #10b981;
+            --badge-pos-bg: rgba(16, 185, 129, 0.15);
+            --badge-neg: #f43f5e;
+            --badge-neg-bg: rgba(244, 63, 94, 0.15);
+            --badge-neu: #f59e0b;
+            --badge-neu-bg: rgba(245, 158, 11, 0.15);
+            --radius-md: 16px; 
+            --radius-lg: 24px;
+            --transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        body { background: var(--surface-ground); color: var(--text-body); min-height: 100vh; overflow-x: hidden; }
+
+        /* ==========================================
+           CINEMATIC UNVEILING SPLASH SCREEN
+           ========================================== */
+        .splash-curtain { position: fixed; inset: 0; background: radial-gradient(circle at center, #0e1b38 0%, #050a17 80%, #02050d 100%); z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 1; visibility: visible; transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.85s; user-select: none; cursor: pointer; }
+        .splash-curtain.dissolve { opacity: 0; visibility: hidden; pointer-events: none; }
+        .splash-aura { position: absolute; width: 320px; height: 320px; background: radial-gradient(circle, rgba(37, 99, 235, 0.28) 0%, rgba(245, 158, 11, 0.12) 50%, transparent 70%); border-radius: 50%; filter: blur(40px); animation: auraPulse 3s ease-in-out infinite alternate; }
+        @keyframes auraPulse { 0% { transform: scale(0.9); opacity: 0.5; } 100% { transform: scale(1.25); opacity: 0.9; } }
+        .splash-emblem-wrap { position: relative; z-index: 2; margin-bottom: 20px; animation: emblemReveal 1.1s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .splash-emblem { width: 95px; height: 95px; object-fit: contain; filter: drop-shadow(0 0 25px rgba(59, 130, 246, 0.55)); }
+        .splash-content { position: relative; z-index: 2; text-align: center; max-width: 580px; padding: 0 20px; }
+        .splash-tag { display: inline-flex; align-items: center; gap: 6px; font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: #fbbf24; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.35); padding: 5px 14px; border-radius: 9999px; margin-bottom: 14px; opacity: 0; animation: textFadeIn 0.8s ease 0.3s forwards; }
+        .splash-title { font-size: 1.85rem; font-weight: 900; color: #f8fafc; letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 8px; opacity: 0; transform: translateY(12px); animation: textFadeInUp 0.85s cubic-bezier(0.16, 1, 0.3, 1) 0.45s forwards; }
+        .splash-subtitle { font-size: 0.88rem; color: #94a3b8; line-height: 1.5; margin-bottom: 24px; opacity: 0; animation: textFadeIn 0.8s ease 0.6s forwards; }
+        .splash-loader-bar { width: 220px; height: 3px; background: rgba(255, 255, 255, 0.08); border-radius: 9999px; overflow: hidden; margin: 0 auto 12px auto; position: relative; opacity: 0; animation: textFadeIn 0.5s ease 0.7s forwards; }
+        .splash-loader-fill { position: absolute; top: 0; left: 0; bottom: 0; width: 0%; background: linear-gradient(90deg, #2563eb, #10b981, #f59e0b); animation: loadBar 2s cubic-bezier(0.16, 1, 0.3, 1) 0.8s forwards; }
+        .splash-skip-hint { font-size: 0.72rem; color: #64748b; letter-spacing: 0.5px; opacity: 0; animation: textFadeIn 0.6s ease 1s forwards; }
+
+        @keyframes emblemReveal { 0% { transform: scale(0.65); opacity: 0; filter: blur(8px); } 100% { transform: scale(1); opacity: 1; filter: blur(0px); } }
+        @keyframes textFadeInUp { 0% { opacity: 0; transform: translateY(14px); } 100% { opacity: 1; transform: translateY(0); } }
+        @keyframes textFadeIn { 0% { opacity: 0; } 100% { opacity: 1; } }
+        @keyframes loadBar { 0% { width: 0%; } 60% { width: 75%; } 100% { width: 100%; } }
+
+        .loader-overlay { position: fixed; inset: 0; background: rgba(4, 9, 20, 0.9); backdrop-filter: blur(12px); display: none; justify-content: center; align-items: center; z-index: 9999; flex-direction: column; }
+        .spinner { width: 48px; height: 48px; border: 3px solid rgba(255,255,255,0.05); border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; box-shadow: 0 0 20px rgba(37, 99, 235, 0.2); }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .topbar {
+            background: rgba(10, 15, 30, 0.7); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+            height: 76px; border-bottom: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between;
+            padding: 0 clamp(16px, 4vw, 40px); position: sticky; top: 0; z-index: 100;
+        }
+        .brand-unit { display: flex; align-items: center; gap: 14px; }
+        .brand-logo-img { width: 40px; height: 40px; object-fit: contain; filter: drop-shadow(0 4px 12px rgba(37, 99, 235, 0.35)); }
+        .brand-title { font-size: 1.05rem; font-weight: 800; color: var(--text-title); letter-spacing: -0.02em; }
+        .brand-subtitle { font-size: 0.68rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; }
+
+        .nav-actions { display: flex; align-items: center; gap: 8px; }
+        
+        .btn-nav {
+            background: transparent; border: 1px solid transparent;
+            color: var(--text-body); padding: 8px 16px; border-radius: 999px; font-size: 0.78rem;
+            font-weight: 600; cursor: pointer; transition: var(--transition); display: inline-flex; align-items: center; gap: 6px;
+        }
+        .btn-nav:hover { background: rgba(255, 255, 255, 0.08); color: var(--text-title); transform: translateY(-1px); }
+        
+        .btn-logout { color: #fb7185; }
+        .btn-logout:hover { background: rgba(244, 63, 94, 0.15); color: #fda4af; }
+
+        .role-badge { font-size: 0.68rem; font-weight: 800; padding: 4px 10px; border-radius: 999px; background: rgba(245, 158, 11, 0.12); color: #fbbf24; text-transform: uppercase; border: 1px solid rgba(245, 158, 11, 0.2); }
+
+        .workspace { max-width: 1440px; margin: 0 auto; padding: clamp(20px, 4vw, 40px); }
+
+        /* Data Source Tabs (Portal, CSV, Testing) */
+        .source-filter-bar { display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 1px solid var(--border-light); padding-bottom: 16px; overflow-x: auto; }
+        .source-tab { padding: 8px 16px; border-radius: 8px; font-size: 0.82rem; font-weight: 700; background: transparent; color: var(--text-muted); border: 1px solid transparent; cursor: pointer; transition: var(--transition); white-space: nowrap; }
+        .source-tab:hover { color: var(--text-title); background: rgba(255,255,255,0.05); }
+        .source-tab.active { background: rgba(37, 99, 235, 0.15); color: var(--txt-blue); border-color: rgba(37, 99, 235, 0.3); }
+
+        .controls-toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 28px; }
+        
+        .dept-filter-bar { display: flex; align-items: center; gap: 4px; overflow-x: auto; padding: 4px; background: rgba(15, 26, 48, 0.4); border-radius: 100px; border: 1px solid var(--border-light); }
+        .dept-tab {
+            padding: 8px 18px; border-radius: 99px; font-size: 0.78rem; font-weight: 700;
+            background: transparent; border: none; color: var(--text-muted); cursor: pointer; transition: var(--transition); white-space: nowrap;
+        }
+        .dept-tab:hover { color: var(--text-title); }
+        .dept-tab.active { background: var(--primary) !important; color: #ffffff !important; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4); }
+
+        .term-selector-group { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .term-select { background: rgba(15, 26, 48, 0.6); border: 1px solid var(--border-light); border-radius: 10px; color: var(--text-title); font-size: 0.82rem; font-weight: 600; padding: 10px 14px; outline: none; cursor: pointer; transition: var(--transition); backdrop-filter: blur(8px); }
+        .term-select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2); }
+
+        .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .kpi-card {
+            background: linear-gradient(180deg, rgba(15, 26, 48, 0.8) 0%, rgba(10, 15, 30, 0.4) 100%);
+            border: 1px solid var(--border-light); border-top: 3px solid var(--accent); border-radius: var(--radius-md);
+            padding: 24px; position: relative; transition: var(--transition); box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            backdrop-filter: blur(12px);
+        }
+        .kpi-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.4); background: linear-gradient(180deg, rgba(22, 36, 68, 0.9) 0%, rgba(10, 15, 30, 0.6) 100%); }
+        .kpi-header { font-size: 0.72rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; }
+        .kpi-value { font-size: 2.6rem; font-weight: 900; color: var(--text-title); margin: 8px 0 2px 0; letter-spacing: -0.03em; }
+        .kpi-sub { font-size: 0.8rem; font-weight: 500; color: var(--text-muted); }
+
+        .alert-panel { background: rgba(37, 99, 235, 0.05); border: 1px dashed rgba(37, 99, 235, 0.3); border-radius: var(--radius-md); padding: 20px 28px; margin-bottom: 30px; }
+        .alert-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .alert-tag { font-size: 0.7rem; font-weight: 800; padding: 4px 12px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .alert-tag-critical { background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.3); }
+        .alert-tag-stable { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .alert-text { font-size: 0.94rem; line-height: 1.6; color: var(--text-body); }
+
+        .main-grid { display: grid; gap: 24px; margin-bottom: 30px; }
+        .panel { background: var(--surface-card); border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: clamp(20px, 3vw, 32px); display: flex; flex-direction: column; box-shadow: 0 15px 35px rgba(0,0,0,0.25); backdrop-filter: blur(16px); }
+        .panel-heading { font-size: 1.1rem; font-weight: 800; color: var(--text-title); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+
+        .select-input, .textarea-input { width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--border-light); border-radius: 12px; color: var(--text-title); font-size: 0.9rem; transition: var(--transition); outline: none; }
+        .select-input { padding: 12px 16px; margin-bottom: 14px; }
+        .textarea-input { height: 110px; padding: 16px; resize: none; margin-bottom: 14px; line-height: 1.6; }
+        .select-input:focus, .textarea-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); background: rgba(0,0,0,0.4); }
+
+        .btn-action { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 24px; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 0.88rem; font-weight: 700; cursor: pointer; transition: var(--transition); box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25); }
+        .btn-action:hover { filter: brightness(1.15); transform: translateY(-2px); box-shadow: 0 12px 25px rgba(37, 99, 235, 0.35); }
+
+        .charts-double { display: grid; grid-template-columns: 1fr 1.25fr; gap: 24px; align-items: center; }
+        .chart-box { position: relative; width: 100%; height: 260px; display: flex; align-items: center; justify-content: center; background: transparent; border: none; padding: 0; box-sizing: border-box; }
+        .chart-box img { max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3)); display: none; }
+
+        .keyword-cloud-box { 
+            display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 16px; 
+            background: rgba(0,0,0,0.15); border-radius: var(--radius-md); border: 1px dashed var(--border-light); 
+            min-height: 80px; 
+            max-height: 135px; /* Locks the box to ~3 rows maximum */
+            overflow-y: auto;  /* Enables internal scrolling */
+        }
+        .keyword-chip { background: rgba(37, 99, 235, 0.1); border: 1px solid rgba(59, 130, 246, 0.25); color: #60a5fa; padding: 6px 14px; border-radius: 9999px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; transition: var(--transition); }
+        .keyword-chip:hover { transform: scale(1.05) translateY(-2px); background: rgba(37, 99, 235, 0.2); border-color: #60a5fa; color: #fff; box-shadow: 0 6px 15px rgba(37, 99, 235, 0.2); }
+        .keyword-count-badge { background: rgba(0, 0, 0, 0.4); padding: 2px 8px; border-radius: 9999px; font-size: 0.7rem; color: #fbbf24; }
+
+        .table-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+        .search-input-box { position: relative; min-width: 280px; flex: 1; max-width: 450px; }
+        .search-input-box input { width: 100%; background: rgba(0,0,0,0.25); border: 1px solid var(--border-light); border-radius: 99px; color: var(--text-title); font-size: 0.88rem; padding: 10px 16px 10px 40px; outline: none; transition: var(--transition); }
+        .search-input-box input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
+        .search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.9rem; pointer-events: none; }
+
+        .table-responsive { width: 100%; overflow-x: auto; border-radius: var(--radius-md); border: 1px solid var(--border-light); background: rgba(0,0,0,0.15); }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { background: rgba(255,255,255,0.02); color: #94a3b8; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; padding: 16px 20px; border-bottom: 1px solid var(--border-light); }
+        td { padding: 18px 20px; border-bottom: 1px solid var(--border-light); font-size: 0.88rem; vertical-align: top; color: var(--text-body); }
+        tbody tr { cursor: pointer; transition: var(--transition); }
+        tbody tr:hover { background: rgba(59, 130, 246, 0.05); }
+
+        .pagination-bar { display: flex; justify-content: space-between; align-items: center; padding: 20px 8px 4px 8px; font-size: 0.82rem; color: var(--text-muted); }
+        .pagination-controls { display: flex; align-items: center; gap: 8px; }
+        .btn-page { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-light); color: var(--text-title); padding: 8px 16px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: var(--transition); }
+        .btn-page:hover:not(:disabled) { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.2); }
+        .btn-page:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        .badge { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 9999px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+        .badge-Positive { background: var(--badge-pos-bg); color: var(--badge-pos); border: 1px solid rgba(16, 185, 129, 0.25); }
+        .badge-Negative { background: var(--badge-neg-bg); color: var(--badge-neg); border: 1px solid rgba(244, 63, 94, 0.25); }
+        .badge-Neutral { background: var(--badge-neu-bg); color: var(--badge-neu); border: 1px solid rgba(245, 158, 11, 0.25); }
+        .badge-Sarcasm { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); display: inline-flex; }
+
+        .token-chip-container { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; align-items: center; }
+        .token-chip { font-size: 0.72rem; font-weight: 700; padding: 4px 10px; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px; line-height: 1.3; }
+        .token-pos { background: rgba(16, 185, 129, 0.1); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.25); }
+        .token-neg { background: rgba(244, 63, 94, 0.1); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.25); }
+        .token-amp { background: rgba(245, 158, 11, 0.1); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.25); }
+        .token-inv { background: rgba(168, 85, 247, 0.1); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.25); }
+        .token-neu { background: rgba(255, 255, 255, 0.02); color: #94a3b8; border: 1px solid rgba(255, 255, 255, 0.08); }
+
+
+
+        /* ===== SYSTEM ALERTS: errors & warnings = centered dialog, success & info = top-center toast ===== */
+        .sys-alert-overlay { position: fixed; inset: 0; z-index: 20000; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(2, 6, 15, 0.74); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); opacity: 0; transition: opacity 0.2s ease; }
+        .sys-alert-overlay.is-open { opacity: 1; }
+        .sys-alert-card { --sa-accent: #ef4444; --sa-soft: rgba(239, 68, 68, 0.16); --sa-edge: rgba(239, 68, 68, 0.5); position: relative; width: min(440px, 100%); box-sizing: border-box; background: #14213a; color: #e2e8f0; border: 1px solid var(--sa-edge); border-top: 6px solid var(--sa-accent); border-radius: 18px; padding: 28px 26px 22px; text-align: center; box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6), 0 0 0 5px var(--sa-soft); transform: translateY(14px) scale(0.96); transition: transform 0.22s cubic-bezier(0.2, 0.9, 0.3, 1.15); font-family: inherit; }
+        .sys-alert-overlay.is-open .sys-alert-card { transform: none; }
+        .sys-alert-card.type-warning { --sa-accent: #f59e0b; --sa-soft: rgba(245, 158, 11, 0.18); --sa-edge: rgba(245, 158, 11, 0.55); }
+        .sys-alert-icon { width: 62px; height: 62px; margin: 0 auto 14px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--sa-soft); color: var(--sa-accent); }
+        .sys-alert-icon svg { width: 34px; height: 34px; }
+        .sys-alert-title { margin: 0 0 8px; font-size: 1.2rem; font-weight: 800; color: #f8fafc; letter-spacing: -0.2px; }
+        .sys-alert-msg { margin: 0; font-size: 0.98rem; line-height: 1.6; color: #cbd5e1; word-break: break-word; max-height: 40vh; overflow-y: auto; }
+        .sys-alert-more { margin-top: 12px; font-size: 0.78rem; font-weight: 600; color: #94a3b8; min-height: 1em; }
+        .sys-alert-btn { margin-top: 18px; width: 100%; padding: 12px 18px; border: 0; border-radius: 12px; font: inherit; font-weight: 700; font-size: 0.95rem; cursor: pointer; background: var(--sa-accent); color: #ffffff; transition: filter 0.15s ease, transform 0.1s ease; }
+        .sys-alert-card.type-warning .sys-alert-btn { color: #1c1300; }
+        .sys-alert-btn:hover { filter: brightness(1.1); }
+        .sys-alert-btn:active { transform: scale(0.98); }
+        .sys-alert-btn:focus-visible { outline: 3px solid var(--sa-soft); outline-offset: 2px; }
+        html body #toast { position: fixed; top: 24px; right: auto; bottom: auto; left: 50%; max-width: min(520px, calc(100vw - 32px)); box-sizing: border-box; display: none; align-items: center; gap: 12px; padding: 13px 20px 13px 16px; background: #14213a; color: #f8fafc; border: 1px solid rgba(255, 255, 255, 0.1); border-left: 5px solid #10b981; border-radius: 12px; font-size: 0.92rem; font-weight: 600; line-height: 1.45; box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5); z-index: 20000; opacity: 0; transform: translate(-50%, -16px); transition: opacity 0.22s ease, transform 0.22s ease; pointer-events: none; }
+        html body #toast.show { opacity: 1; transform: translate(-50%, 0); }
+        html body #toast.toast-info { border-left-color: #3b82f6; }
+        html body #toast .sys-toast-ic { display: flex; flex: 0 0 auto; color: #10b981; }
+        html body #toast.toast-info .sys-toast-ic { color: #3b82f6; }
+        html body #toast .sys-toast-ic svg { width: 22px; height: 22px; }
+        [data-theme="light"] .sys-alert-overlay { background: rgba(15, 23, 42, 0.45); }
+        [data-theme="light"] .sys-alert-card { background: #ffffff; color: #334155; box-shadow: 0 25px 60px rgba(15, 23, 42, 0.25), 0 0 0 5px var(--sa-soft); }
+        [data-theme="light"] .sys-alert-title { color: #0f172a; }
+        [data-theme="light"] .sys-alert-msg { color: #475569; }
+        [data-theme="light"] .sys-alert-more { color: #64748b; }
+        [data-theme="light"] .sys-alert-card { --sa-accent: #dc2626; --sa-soft: rgba(220, 38, 38, 0.1); --sa-edge: rgba(220, 38, 38, 0.35); }
+        [data-theme="light"] .sys-alert-card.type-warning { --sa-accent: #d97706; --sa-soft: rgba(217, 119, 6, 0.12); --sa-edge: rgba(217, 119, 6, 0.4); }
+        html[data-theme="light"] body #toast { background: #ffffff; color: #0f172a; border-color: rgba(15, 23, 42, 0.1); box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18); }
+        @media (prefers-reduced-motion: reduce) { .sys-alert-overlay, .sys-alert-card, html body #toast { transition: none; } }
+
+        /* ===== STUDENT SIGN-OUT FAREWELL SCREEN ===== */
+        .farewell-screen { position: fixed; inset: 0; z-index: 10001; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px; background: radial-gradient(circle at center, #0e1b38 0%, #050a17 80%, #02050d 100%); opacity: 0; transition: opacity 0.28s ease; }
+        .farewell-screen.show { display: flex; }
+        .farewell-screen.visible { opacity: 1; }
+        .farewell-aura { position: absolute; width: 300px; height: 300px; border-radius: 50%; filter: blur(44px); background: radial-gradient(circle, rgba(16, 185, 129, 0.22) 0%, rgba(37, 99, 235, 0.20) 50%, transparent 72%); animation: farewellBreathe 3.2s ease-in-out infinite; }
+        .farewell-emblem { position: relative; z-index: 2; width: 78px; height: 78px; object-fit: contain; margin-bottom: 22px; filter: drop-shadow(0 0 22px rgba(59, 130, 246, 0.5)); animation: farewellEmblem 2.8s ease-in-out infinite; }
+        .farewell-body { position: relative; z-index: 2; max-width: 440px; }
+        .farewell-tag { display: inline-block; font-size: 0.68rem; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #6ee7b7; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); padding: 4px 12px; border-radius: 9999px; margin-bottom: 14px; }
+        .farewell-title { font-size: 1.55rem; font-weight: 900; color: #f8fafc; letter-spacing: -0.02em; line-height: 1.25; margin-bottom: 8px; }
+        .farewell-sub { font-size: 0.9rem; color: #94a3b8; line-height: 1.55; margin-bottom: 22px; }
+        .farewell-bar { width: 200px; height: 3px; margin: 0 auto 14px auto; border-radius: 9999px; overflow: hidden; background: rgba(255, 255, 255, 0.09); position: relative; }
+        .farewell-bar::after { content: ""; position: absolute; top: 0; bottom: 0; width: 40%; border-radius: 9999px; background: linear-gradient(90deg, #2563eb, #10b981); animation: farewellSlide 1.15s ease-in-out infinite; }
+        .farewell-status { font-size: 0.74rem; color: #64748b; letter-spacing: 0.4px; min-height: 1.1em; }
+        .farewell-retry { display: none; margin: 14px auto 0 auto; }
+        .farewell-screen.slow .farewell-retry { display: inline-flex; }
+
+        @keyframes farewellSlide { 0% { left: -40%; } 100% { left: 100%; } }
+        @keyframes farewellBreathe { 0%, 100% { transform: scale(0.92); opacity: 0.75; } 50% { transform: scale(1.08); opacity: 1; } }
+        @keyframes farewellEmblem { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+
+        [data-theme="light"] .farewell-screen { background: radial-gradient(circle at center, #ffffff 0%, #eef2f7 65%, #e2e8f0 100%); }
+        [data-theme="light"] .farewell-tag { color: #047857; background: rgba(16, 185, 129, 0.12); border-color: rgba(5, 150, 105, 0.35); }
+        [data-theme="light"] .farewell-title { color: #0f172a; }
+        [data-theme="light"] .farewell-sub { color: #475569; }
+        [data-theme="light"] .farewell-bar { background: rgba(15, 23, 42, 0.10); }
+        [data-theme="light"] .farewell-status { color: #64748b; }
+        @media (prefers-reduced-motion: reduce) {
+            .farewell-aura, .farewell-emblem { animation: none; }
+            .farewell-bar::after { animation-duration: 2.4s; }
+            .farewell-screen { transition: none; }
+        }
+
+        /* ===== UI/UX OVERHAUL: Modal Animations ===== */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(2, 6, 15, 0.85); backdrop-filter: blur(12px); display: none; align-items: center; justify-content: center; z-index: 999; opacity: 0; transition: opacity 0.25s ease; }
+        .modal-overlay.modal-open { opacity: 1; }
+        .modal-card { background: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-lg); width: min(92%, 760px); max-height: 88vh; overflow-y: auto; padding: 32px; box-shadow: 0 30px 60px rgba(0,0,0,0.6); }
+        .modal-sheet { background: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-lg); width: min(90%, 400px); padding: 32px; text-align: center; box-shadow: 0 30px 60px rgba(0,0,0,0.6); }
+        .modal-card, .modal-sheet { transform: scale(0.95) translateY(15px); transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+        .modal-overlay.modal-open .modal-card, .modal-overlay.modal-open .modal-sheet { transform: scale(1) translateY(0); }
+
+        /* Scrollbars for keyword cloud */
+        .keyword-cloud-box::-webkit-scrollbar { width: 6px; }
+        .keyword-cloud-box::-webkit-scrollbar-track { background: transparent; }
+        .keyword-cloud-box::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.3); border-radius: 10px; }
+        .keyword-cloud-box::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.5); }
+
+        @media(max-width: 1024px) { .charts-double { grid-template-columns: 1fr; } }
+
+        /* ===== FILTER GROUP LABELS (clearly captions, not buttons) ===== */
+        .filter-label { display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; margin: 0 8px 0 6px; padding: 0 14px 0 4px; border-right: 2px solid var(--border-light); font-size: 0.68rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--primary); cursor: default; user-select: none; pointer-events: none; white-space: nowrap; }
+        .filter-label svg { width: 13px; height: 13px; flex: 0 0 13px; }
+
+        /* ===== LIGHT THEME ===== */
+        html[data-theme="light"] {
+            --surface-ground: #eef2f7; --surface-card: rgba(255, 255, 255, 0.94); --surface-card-hover: #ffffff;
+            --primary: #2563eb; --primary-hover: #1d4ed8; --accent-gold: #d97706;
+            --text-title: #0f172a; --text-body: #475569; --text-muted: #64748b;
+            --border-light: rgba(15, 23, 42, 0.12);
+            --badge-pos: #047857; --badge-pos-bg: rgba(16, 185, 129, 0.14);
+            --badge-neg: #be123c; --badge-neg-bg: rgba(244, 63, 94, 0.12);
+            --badge-neu: #b45309; --badge-neu-bg: rgba(245, 158, 11, 0.16);
+            --txt-blue: #1d4ed8; --txt-gold: #b45309; --txt-soft: #475569;
+        }
+        html[data-theme="light"] .topbar { background: rgba(255, 255, 255, 0.86); box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06); }
+        html[data-theme="light"] .brand-subtitle { color: #64748b; }
+        html[data-theme="light"] .btn-nav:hover { background: rgba(15, 23, 42, 0.06); }
+        html[data-theme="light"] .btn-logout { color: #be123c; }
+        html[data-theme="light"] .btn-logout:hover { background: rgba(244, 63, 94, 0.1); color: #9f1239; }
+        html[data-theme="light"] .role-badge { color: #b45309; background: rgba(245, 158, 11, 0.14); border-color: rgba(217, 119, 6, 0.4); }
+        html[data-theme="light"] .source-tab:hover { background: rgba(15, 23, 42, 0.05); }
+        html[data-theme="light"] .source-tab.active { background: rgba(37, 99, 235, 0.1); color: #1d4ed8; border-color: rgba(37, 99, 235, 0.35); }
+        html[data-theme="light"] .dept-filter-bar { background: rgba(255, 255, 255, 0.85); box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05); }
+        html[data-theme="light"] .dept-tab.active { box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3); }
+        html[data-theme="light"] .term-select { background: #ffffff; color: var(--text-title); }
+        html[data-theme="light"] .kpi-card { background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08); }
+        html[data-theme="light"] .kpi-card:hover { background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%); box-shadow: 0 16px 32px rgba(15, 23, 42, 0.14); }
+        html[data-theme="light"] .alert-panel { background: rgba(37, 99, 235, 0.06); border-color: rgba(37, 99, 235, 0.35); }
+        html[data-theme="light"] .alert-tag-critical { color: #be123c; background: rgba(244, 63, 94, 0.12); border-color: rgba(244, 63, 94, 0.35); }
+        html[data-theme="light"] .alert-tag-stable { color: #047857; background: rgba(16, 185, 129, 0.14); border-color: rgba(16, 185, 129, 0.4); }
+        html[data-theme="light"] .panel { box-shadow: 0 10px 28px rgba(15, 23, 42, 0.07); }
+        html[data-theme="light"] .select-input, html[data-theme="light"] .textarea-input { background: #ffffff; }
+        html[data-theme="light"] .select-input:focus, html[data-theme="light"] .textarea-input:focus { background: #ffffff; }
+        html[data-theme="light"] .chart-box img { filter: drop-shadow(0 6px 12px rgba(15, 23, 42, 0.14)); }
+        html[data-theme="light"] .keyword-cloud-box { background: rgba(15, 23, 42, 0.035); }
+        html[data-theme="light"] .keyword-chip { color: #1d4ed8; background: rgba(37, 99, 235, 0.08); border-color: rgba(37, 99, 235, 0.3); }
+        html[data-theme="light"] .keyword-chip:hover { color: #1e3a8a; background: rgba(37, 99, 235, 0.16); border-color: #2563eb; box-shadow: 0 6px 14px rgba(37, 99, 235, 0.18); }
+        html[data-theme="light"] .keyword-count-badge { background: rgba(15, 23, 42, 0.08); color: #b45309; }
+        html[data-theme="light"] .search-input-box input { background: #ffffff; }
+        html[data-theme="light"] .table-responsive { background: #ffffff; }
+        html[data-theme="light"] th { background: #f1f5f9; color: #475569; }
+        html[data-theme="light"] tbody tr:hover { background: rgba(37, 99, 235, 0.06); }
+        html[data-theme="light"] .btn-page { background: #ffffff; color: var(--text-title); }
+        html[data-theme="light"] .btn-page:hover:not(:disabled) { background: #f1f5f9; border-color: rgba(15, 23, 42, 0.25); }
+        html[data-theme="light"] .badge-Positive { border-color: rgba(5, 150, 105, 0.4); }
+        html[data-theme="light"] .badge-Negative { border-color: rgba(225, 29, 72, 0.4); }
+        html[data-theme="light"] .badge-Neutral { border-color: rgba(217, 119, 6, 0.45); }
+        html[data-theme="light"] .badge-Sarcasm { color: #7e22ce; background: rgba(168, 85, 247, 0.12); border-color: rgba(147, 51, 234, 0.4); }
+        html[data-theme="light"] .token-pos { color: #047857; background: rgba(16, 185, 129, 0.12); border-color: rgba(5, 150, 105, 0.35); }
+        html[data-theme="light"] .token-neg { color: #be123c; background: rgba(244, 63, 94, 0.1); border-color: rgba(225, 29, 72, 0.35); }
+        html[data-theme="light"] .token-amp { color: #b45309; background: rgba(245, 158, 11, 0.14); border-color: rgba(217, 119, 6, 0.4); }
+        html[data-theme="light"] .token-inv { color: #7e22ce; background: rgba(168, 85, 247, 0.1); border-color: rgba(147, 51, 234, 0.35); }
+        html[data-theme="light"] .token-neu { color: #64748b; background: rgba(15, 23, 42, 0.04); border-color: rgba(15, 23, 42, 0.12); }
+        html[data-theme="light"] .modal-card, html[data-theme="light"] .modal-sheet { background: #ffffff; border-color: rgba(15, 23, 42, 0.14); box-shadow: 0 30px 60px rgba(15, 23, 42, 0.25); }
+        html[data-theme="light"] .loader-overlay { background: rgba(238, 242, 247, 0.9); }
+        html[data-theme="light"] .spinner { border-color: rgba(15, 23, 42, 0.08); border-top-color: var(--primary); }
+        html[data-theme="light"] .splash-curtain { background: radial-gradient(circle at center, #ffffff 0%, #eef2f7 70%, #e2e8f0 100%); }
+        html[data-theme="light"] .splash-title { color: #0f172a; }
+        html[data-theme="light"] .splash-subtitle { color: #475569; }
+        html[data-theme="light"] .splash-tag { color: #b45309; }
+        html[data-theme="light"] .splash-loader-bar { background: rgba(15, 23, 42, 0.1); }
+        html[data-theme="light"] .splash-skip-hint { color: #64748b; }
+
+        /* ===== CSV import + privacy notices ===== */
+        .info-note { margin: 0 0 16px; padding: 10px 14px; border-radius: 12px; font-size: 0.82rem; line-height: 1.5; color: #93c5fd; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(96, 165, 250, 0.4); border-left: 4px solid #3b82f6; }
+        html[data-theme="light"] .info-note { color: #1d4ed8; }
+        .privacy-note { margin: 0 0 16px; padding: 11px 14px; border-radius: 12px; font-size: 0.86rem; line-height: 1.5; color: #fbbf24; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.4); border-left: 4px solid #f59e0b; }
+        .csv-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
+        .csv-stat { padding: 10px 8px; border-radius: 10px; text-align: center; border: 1px solid var(--border-light); background: rgba(255, 255, 255, 0.03); }
+        .csv-stat b { display: block; font-size: 1.25rem; color: var(--text-title); }
+        .csv-stat span { font-size: 0.7rem; color: var(--text-muted); }
+        .csv-stat.ok b { color: #10b981; } .csv-stat.warn b { color: #f59e0b; }
+        .csv-warn { margin-bottom: 6px; padding: 8px 12px; border-radius: 10px; font-size: 0.8rem; line-height: 1.45; color: #fbbf24; background: rgba(245, 158, 11, 0.09); border: 1px solid rgba(245, 158, 11, 0.3); }
+        .csv-map { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; margin-top: 12px; padding: 12px; border: 1px solid var(--border-light); border-radius: 12px; }
+        .csv-map-title { grid-column: 1 / -1; font-size: 0.78rem; font-weight: 800; color: var(--text-title); }
+        .csv-map label { display: flex; flex-direction: column; gap: 4px; font-size: 0.72rem; color: var(--text-muted); }
+        .csv-map select { padding: 7px 8px; border-radius: 8px; border: 1px solid var(--border-light); background: var(--surface-ground); color: var(--text-title); font: inherit; font-size: 0.8rem; }
+        .csv-samples { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; max-height: 150px; overflow: auto; }
+        .csv-samples > div { padding: 8px 10px; border-radius: 8px; font-size: 0.78rem; color: var(--text-body); border: 1px solid var(--border-light); overflow-wrap: anywhere; }
+        .csv-row-no { font-size: 0.66rem; padding: 1px 6px; border-radius: 6px; background: rgba(148, 163, 184, 0.2); color: var(--text-muted); }
+        .csv-skipped { margin-top: 10px; font-size: 0.78rem; color: var(--text-muted); } .csv-skipped summary { cursor: pointer; font-weight: 700; }
+        .csv-skipped > div { padding: 2px 0 0 12px; }
+        .csv-progress { padding: 14px; border: 1px solid var(--border-light); border-radius: 12px; }
+        .csv-progress-label { font-weight: 700; color: var(--text-title); margin-bottom: 8px; }
+        .csv-progress-bar { height: 10px; border-radius: 99px; background: rgba(148, 163, 184, 0.25); overflow: hidden; }
+        .csv-progress-bar span { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #3b82f6, #10b981); transition: width 0.4s ease; }
+        .csv-progress-sub { margin-top: 8px; font-size: 0.74rem; color: var(--text-muted); }
+        .csv-done { padding: 14px; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.08); }
+        .csv-done-title { font-weight: 800; color: #10b981; } .csv-done-sub { font-size: 0.78rem; color: var(--text-muted); margin: 4px 0 10px; }
+        .csv-history { margin-top: 18px; padding-top: 12px; border-top: 1px dashed var(--border-light); }
+        .csv-history-head { font-size: 0.78rem; font-weight: 800; color: var(--text-title); margin-bottom: 8px; }
+        .csv-history-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 0; border-bottom: 1px solid var(--border-light); font-size: 0.78rem; }
+        .csv-history-main { flex: 1 1 200px; min-width: 0; } .csv-history-main b { display: block; color: var(--text-title); overflow-wrap: anywhere; } .csv-history-main span, .csv-history-meta { color: var(--text-muted); font-size: 0.72rem; }
+        .csv-chip { padding: 2px 9px; border-radius: 999px; font-size: 0.68rem; font-weight: 800; background: rgba(16, 185, 129, 0.15); color: #10b981; }
+        .csv-chip-rolled_back { background: rgba(148, 163, 184, 0.2); color: var(--text-muted); } .csv-chip-running { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+        .csv-undo { font-size: 0.72rem !important; padding: 5px 10px !important; }
+        .csv-history-empty { font-size: 0.78rem; color: var(--text-muted); }
+        @media (max-width: 560px) { .csv-stats { grid-template-columns: repeat(2, 1fr); } .csv-map { grid-template-columns: 1fr; } }
+        html[data-theme="light"] .privacy-note, html[data-theme="light"] .csv-warn { color: #92400e; }
+        html[data-theme="light"] .csv-stat { background: #ffffff; }
+        html[data-theme="light"] .csv-done-title { color: #047857; } html[data-theme="light"] .csv-stat.ok b { color: #047857; }
+
+        /* ===== MOBILE POLISH (phones and touch screens) ===== */
+        button, a, select, .btn-nav, .btn-action, .dept-tab, .source-tab, .btn-page { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+        @media (max-width: 900px) {
+            .topbar { height: auto; min-height: 60px; flex-wrap: wrap; row-gap: 8px; padding: 10px 14px; }
+            .brand-unit { flex: 1 1 auto; min-width: 0; }
+            .nav-actions { flex: 1 1 100%; flex-wrap: wrap; justify-content: flex-start; gap: 6px; }
+            .nav-sep { display: none; }
+            .nav-user { font-size: 0.8rem !important; }
+            .main-grid { grid-template-columns: 1fr !important; }
+        }
+        @media (max-width: 640px) {
+            .workspace { padding: 14px 12px; }
+            .kpi-row { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 18px; }
+            .charts-double, .charts-double[style] { grid-template-columns: 1fr !important; max-width: 100% !important; }
+            .panel [style*="grid-template-columns"], .modal-card [style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
+            .panel { padding: 18px 14px; }
+            .dept-filter-bar { max-width: 100%; }
+            .term-selector-group { margin-left: 0 !important; width: 100%; }
+            .term-selector-group .term-select { flex: 1 1 130px; }
+            .source-filter-bar { margin-bottom: 16px; padding-bottom: 12px; }
+            input, select, textarea { font-size: 16px !important; }   /* stops iPhones from zooming in when a field is tapped */
+            .modal-overlay { align-items: flex-end; padding: 0; }
+            .modal-card { width: 100% !important; max-width: none; max-height: 92vh; max-height: 92dvh; border-radius: 20px 20px 0 0; padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }
+            .modal-sheet { align-self: center; margin: auto 0; }
+            .pagination-bar { flex-direction: column; gap: 10px; align-items: stretch; text-align: center; }
+            .pagination-controls { justify-content: center; }
+            /* each feedback record becomes a card instead of a squeezed table row */
+            .logs-table, .logs-table tbody, .logs-table tr, .logs-table td { display: block; width: 100% !important; }
+            .logs-table thead { display: none; }
+            .logs-table tr { margin: 0 0 12px; padding: 12px; border: 1px solid var(--border-light); border-radius: 14px; background: var(--surface-card); }
+            .logs-table td { display: flex; gap: 10px; padding: 6px 0 !important; border: 0 !important; align-items: flex-start; }
+            .logs-table td::before { content: attr(data-label); flex: 0 0 84px; font-size: 0.66rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); padding-top: 3px; }
+            .logs-table td[data-label="AI breakdown"] { flex-direction: column; gap: 4px; }
+            .logs-table td[data-label="AI breakdown"]::before { flex: 0 0 auto; padding-top: 0; }
+            .logs-table td[data-label="AI breakdown"] > div { width: 100%; box-sizing: border-box; }
+            .logs-table td[data-label="Polarity"] { flex-wrap: wrap; align-items: center; }
+            .topbar { position: relative; }   /* gives the screen back to the data on small phones */
+            .logs-table td > * { min-width: 0; }
+            .table-responsive { border: 0 !important; background: transparent !important; }
+            .csv-map { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 640px) {
+            .topbar { padding: 8px 12px; row-gap: 6px; }
+            .brand-title { font-size: 0.95rem; }
+            .nav-actions { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding-bottom: 2px; margin: 0 -12px; padding-left: 12px; padding-right: 12px; mask-image: linear-gradient(90deg, #000 92%, transparent); -webkit-mask-image: linear-gradient(90deg, #000 92%, transparent); }
+            .nav-actions::-webkit-scrollbar { display: none; }
+            .nav-actions > * { flex: 0 0 auto; white-space: nowrap; }
+            .nav-actions .btn-nav { padding: 8px 12px; font-size: 0.8rem; }
+            .nav-actions .role-badge, .nav-actions .nav-user, .nav-sep { display: none; }
+        }
+        @media (hover: none) and (pointer: coarse) {
+            .btn-nav, .btn-action, .dept-tab, .source-tab, .btn-page, .term-select { min-height: 44px; }
+        }
+
+        /* ===== PRIORITY 3: MISD SENTIMENT OVERRIDE & CONFUSION MATRIX / F1 EVALUATION ===== */
+        .badge-Verified { background: rgba(16, 185, 129, 0.14); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.35); display: inline-flex; font-size: 0.65rem; padding: 3px 8px; }
+        .badge-Overridden { background: rgba(59, 130, 246, 0.16); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.38); display: inline-flex; font-size: 0.65rem; padding: 3px 8px; }
+        .override-box { background: rgba(15, 26, 48, 0.78); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: var(--radius-md); padding: 16px; margin-bottom: 18px; }
+        .override-btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+        .btn-override { flex: 1 1 120px; padding: 9px 12px; border-radius: 10px; font-size: 0.78rem; font-weight: 800; cursor: pointer; border: 1.5px solid transparent; transition: var(--transition); display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: rgba(255,255,255,0.04); color: var(--text-title); }
+        .btn-override:hover { transform: translateY(-1px); }
+        .btn-override.ov-pos { border-color: rgba(16, 185, 129, 0.4); color: #34d399; background: rgba(16, 185, 129, 0.1); }
+        .btn-override.ov-pos.active, .btn-override.ov-pos:hover { background: #10b981; color: #ffffff; box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35); }
+        .btn-override.ov-neu { border-color: rgba(245, 158, 11, 0.4); color: #fbbf24; background: rgba(245, 158, 11, 0.1); }
+        .btn-override.ov-neu.active, .btn-override.ov-neu:hover { background: #f59e0b; color: #0f172a; box-shadow: 0 6px 16px rgba(245, 158, 11, 0.35); }
+        .btn-override.ov-neg { border-color: rgba(244, 63, 94, 0.4); color: #fb7185; background: rgba(244, 63, 94, 0.1); }
+        .btn-override.ov-neg.active, .btn-override.ov-neg:hover { background: #f43f5e; color: #ffffff; box-shadow: 0 6px 16px rgba(244, 63, 94, 0.35); }
+
+        .eval-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 18px; }
+        .eval-kpi-card { background: rgba(7, 13, 29, 0.65); border: 1px solid var(--border-light); border-top: 3px solid var(--primary); border-radius: 14px; padding: 14px 16px; text-align: center; }
+        .eval-kpi-label { font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); }
+        .eval-kpi-val { font-size: 1.65rem; font-weight: 900; color: var(--text-title); margin: 4px 0 2px; }
+        .eval-kpi-sub { font-size: 0.7rem; color: var(--text-muted); }
+
+        .cm-table { width: 100%; border-collapse: separate; border-spacing: 6px; margin-top: 6px; text-align: center; }
+        .cm-table th { background: transparent; border: none; padding: 8px; font-size: 0.7rem; color: var(--text-muted); text-align: center; }
+        .cm-cell { padding: 14px 10px; border-radius: 12px; font-weight: 800; font-size: 1.1rem; border: 1px solid var(--border-light); background: rgba(255,255,255,0.02); color: var(--text-body); }
+        .cm-cell-tp { background: rgba(16, 185, 129, 0.16); border-color: rgba(16, 185, 129, 0.45); color: #34d399; }
+        .cm-cell-err { background: rgba(244, 63, 94, 0.12); border-color: rgba(244, 63, 94, 0.35); color: #fb7185; }
+        .cm-row-label { font-size: 0.75rem; font-weight: 800; color: var(--text-title); text-align: right; padding-right: 10px; white-space: nowrap; }
+
+        html[data-theme="light"] .override-box, html[data-theme="light"] .eval-kpi-card { background: #f8fafc; }
+        html[data-theme="light"] .cm-cell { background: #f8fafc; color: #334155; }
+        html[data-theme="light"] .cm-cell-tp { background: rgba(16, 185, 129, 0.15); color: #047857; border-color: rgba(5, 150, 105, 0.4); }
+        html[data-theme="light"] .cm-cell-err { background: rgba(244, 63, 94, 0.12); color: #be123c; border-color: rgba(225, 29, 72, 0.35); }
+        html[data-theme="light"] .badge-Verified { color: #047857; background: rgba(16, 185, 129, 0.14); }
+        html[data-theme="light"] .badge-Overridden { color: #1d4ed8; background: rgba(59, 130, 246, 0.14); }
+    </style>
+</head>
+<body>
+    <!-- CINEMATIC UNVEILING INTRO / WELCOME SPLASH -->
+    <div id="splashCurtain" class="splash-curtain" role="status" aria-live="polite">
+        <div class="splash-aura"></div>
+        <div class="splash-emblem-wrap">
+            <img src="{{ url_for('static', filename='ccclogo.png') }}" alt="City College of Calamba Emblem" class="splash-emblem">
+        </div>
+        <div class="splash-content">
+            <div class="splash-tag">Institutional Quality Assurance & Oversight</div>
+            <h1 class="splash-title">City College of Calamba</h1>
+            <p class="splash-subtitle">Bilingual Sentiment Analysis & Student Feedback Portal</p>
+            <div class="splash-loader-bar">
+                <div class="splash-loader-fill"></div>
+            </div>
+            <div class="splash-skip-hint">Loading your dashboard&hellip;</div>
+        </div>
+    </div>
+
+    <div id="toast" role="status" aria-live="polite"></div>
+
+    <div id="loader" class="loader-overlay">
+        <div class="spinner"></div>
+        <p id="loaderText" style="margin-top: 16px; color: var(--text-title); font-weight: 500; font-size: 0.92rem;">Processing Feedback...</p>
+    </div>
+
+    <!-- Algorithm Dissection Inspector Modal -->
+    <div id="algorithmModal" class="modal-overlay">
+        <div class="modal-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <span style="font-size:0.75rem; font-weight:800; color:var(--txt-blue); text-transform:uppercase;">🔬 AI Sentiment Inspector</span>
+                <button class="btn-nav" onclick="closeAlgorithmModal()" style="padding:4px 10px; font-size:0.78rem;">✕ Close</button>
+            </div>
+            
+            <h3 style="color:var(--text-title); font-size:1.15rem; margin-bottom: 6px;" id="modalFeedbackRaw">Feedback Text</h3>
+            <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; align-items:center;" id="modalBadgesContainer">
+                <span id="modalSentimentBadge" class="badge badge-Positive">Positive</span>
+                <span id="modalDeptBadge" class="badge badge-Neutral" style="background:rgba(37,99,235,0.2); color:var(--txt-blue);">DCI</span>
+                <span id="modalConfidenceBadge" class="badge badge-Neutral" style="background:rgba(245,158,11,0.2); color:var(--txt-gold);">Confidence: 95%</span>
+            </div>
+
+            <div style="background:rgba(7,13,29,0.65); border:1px solid var(--border-light); border-radius:var(--radius-md); padding:16px; margin-bottom:16px;">
+                <div style="font-size:0.75rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; margin-bottom:8px;">
+                    1. AI Word Scoring Breakdown:
+                </div>
+                <div id="modalTokenWeightsContainer" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+            </div>
+
+            <div style="background:rgba(7,13,29,0.65); border:1px solid var(--border-light); border-radius:var(--radius-md); padding:16px; margin-bottom:16px;">
+                <div style="font-size:0.75rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; margin-bottom:8px;">
+                    2. Category & Emotion Breakdown:
+                </div>
+                <div id="modalClauseBreakdown" style="display:flex; flex-direction:column; gap:8px;"></div>
+            </div>
+
+            <div style="background:rgba(16,185,129,0.08); border-left:3px solid #10b981; border-radius:8px; padding:16px; margin-bottom:20px;">
+                <div style="font-size:0.75rem; font-weight:800; color:var(--txt-green); text-transform:uppercase; margin-bottom:4px;">
+                    3. AI Recommendation:
+                </div>
+                <div id="modalPrescriptiveAction" style="font-size:0.86rem; color:var(--text-title); line-height:1.5;">
+                    Analyzing required intervention steps...
+                </div>
+            </div>
+
+            {% if role == 'MISD' %}
+            <div class="override-box" id="modalOverrideBox">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                    <div>
+                        <div style="font-size:0.75rem; font-weight:800; color:#60a5fa; text-transform:uppercase;">
+                            4. MISD Ground-Truth Verification & Label Override
+                        </div>
+                        <div style="font-size:0.76rem; color:var(--text-muted); margin-top:2px;" id="modalVerifyStatusText">
+                            Confirm or correct the AI polarity to include this record in the Confusion Matrix & F1-Score evaluation.
+                        </div>
+                    </div>
+                    <button type="button" id="btnResetOverride" class="btn-nav" onclick="resetSentimentOverride()" style="display:none; padding:5px 12px; font-size:0.72rem; color:#fb7185; border-color:rgba(244,63,94,0.35);">
+                        ↺ Reset to AI Baseline
+                    </button>
+                </div>
+                <div class="override-btn-row">
+                    <button type="button" id="btnOvPositive" class="btn-override ov-pos" onclick="submitSentimentOverride('Positive')">✓ Confirm / Set Positive</button>
+                    <button type="button" id="btnOvNeutral" class="btn-override ov-neu" onclick="submitSentimentOverride('Neutral')">✓ Confirm / Set Neutral</button>
+                    <button type="button" id="btnOvNegative" class="btn-override ov-neg" onclick="submitSentimentOverride('Negative')">✓ Confirm / Set Negative</button>
+                </div>
+            </div>
+            {% endif %}
+
+            <div style="text-align: right;">
+                <button class="btn-action" onclick="closeAlgorithmModal()">Acknowledge & Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Academic Year Modal (MISD Only) -->
+    {% if role == 'MISD' %}
+    <div id="addYearModal" class="modal-overlay">
+        <div class="modal-sheet" style="text-align: left; width: min(90%, 420px);">
+            <h4 style="color: var(--text-title); font-size: 1.15rem; margin-bottom: 8px;">Register Academic Year</h4>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px;">Format must follow standard academic cycle (e.g. 2026-2027).</p>
+            
+            <input type="text" id="newYearInput" placeholder="YYYY-YYYY (e.g. 2027-2028)" class="select-input" style="margin-bottom: 16px;">
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="btn-nav" onclick="closeAddYearModal()">Cancel</button>
+                <button class="btn-action" onclick="submitNewYear()">Save Academic Year</button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Logout Confirmation Sheet -->
+    <div id="logoutModal" class="modal-overlay">
+        <div class="modal-sheet">
+            <h4 style="color: var(--text-title); font-size: 1.15rem; margin-bottom: 8px;">End Active Session?</h4>
+            <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 22px;">Are you sure you want to log out of the institutional evaluation portal?</p>
+            <div style="display: flex; gap: 12px;">
+                <button class="btn-nav" style="flex: 1; justify-content: center;" onclick="closeLogoutModal()">Cancel</button>
+                <button class="btn-action" style="flex: 1; justify-content: center; background: #f43f5e;" onclick="confirmLogout()">Confirm Sign Out</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Administrator sign-out farewell screen -->
+    <div id="farewellScreen" class="farewell-screen" role="alertdialog" aria-live="polite" aria-labelledby="farewellTitle">
+        <div class="farewell-aura"></div>
+        <img src="{{ url_for('static', filename='ccclogo.png') }}" alt="" class="farewell-emblem">
+        <div class="farewell-body">
+            <div class="farewell-tag">Signing out</div>
+            <h2 id="farewellTitle" class="farewell-title">Salamat sa iyong paglilingkod, <span id="farewellName">{{ username }}</span>!</h2>
+            <p class="farewell-sub">Maraming salamat sa pagpapanatili ng kalidad ng City College of Calamba. Thank you for keeping our institutional standards strong.</p>
+            <div class="farewell-bar"></div>
+            <div id="farewellStatus" class="farewell-status">Isinasara ang iyong session nang ligtas...</div>
+            <button type="button" id="farewellRetry" class="btn-action farewell-retry" onclick="retryLogout()">Taking long? Try again</button>
+        </div>
+    </div>
+
+    <!-- Hidden form for secure CSRF POST logout -->
+    <form id="logoutForm" method="POST" action="{{ url_for('logout') }}" style="display: none;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    </form>
+
+    <!-- Batch CSV Ingestion Modal (MISD Only) -->
+    {% if role == 'MISD' %}
+    <div id="csvModal" class="modal-overlay">
+        <div class="modal-card" style="width: min(94%, 720px); max-height: 92vh; overflow-y: auto;">
+            <h3 style="color:var(--text-title); margin-bottom: 8px;">Upload Survey Data (CSV)</h3>
+            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom: 18px;">Upload semester student narratives. The file is checked first, so nothing is saved until you confirm. Personal details in comments are masked automatically.</p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                <div>
+                    <label class="field-label" style="display:block; margin-bottom:4px; font-size:0.75rem; color:var(--text-muted);">Academic Year</label>
+                    <select id="csvYear" class="select-input" style="margin-bottom:0;"></select>
+                </div>
+                <div>
+                    <label class="field-label" style="display:block; margin-bottom:4px; font-size:0.75rem; color:var(--text-muted);">Semester</label>
+                    <select id="csvSem" class="select-input" style="margin-bottom:0;">
+                        <option value="1st Semester">1st Semester</option>
+                        <option value="2nd Semester">2nd Semester</option>
+                    </select>
+                </div>
+            </div>
+
+            <label class="field-label" style="display:block; margin-bottom:4px; font-size:0.75rem; color:var(--text-muted);">Fallback Academic Program (if CSV column missing)</label>
+            <select id="csvProgFallback" class="select-input">
+                <option value="BSCS">BSCS</option>
+                <option value="BSIT">BSIT</option>
+                <option value="General">General / Unknown</option>
+            </select>
+
+            <input type="file" id="csvFileInput" accept=".csv" style="margin: 6px 0 14px 0; color:var(--text-body); max-width:100%;" onchange="resetCsvPreview()">
+
+            <div id="csvPreviewBox" style="display:none;"></div>
+
+            <div id="csvProgressBox" class="csv-progress" style="display:none;">
+                <div class="csv-progress-label" id="csvProgressLabel">Importing...</div>
+                <div class="csv-progress-bar"><span id="csvProgressFill"></span></div>
+                <div class="csv-progress-sub">Please keep this window open. If it is interrupted you can press Import again and it will continue where it stopped.</div>
+            </div>
+
+            <div id="csvDoneBox" class="csv-done" style="display:none;"></div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 14px;">
+                <button class="btn-nav" onclick="closeCsvModal()">Close</button>
+                <button class="btn-action" id="csvPrimaryBtn" onclick="csvPrimaryAction()">Check file</button>
+            </div>
+
+            <div class="csv-history">
+                <div class="csv-history-head">Recent imports</div>
+                <div id="csvHistoryList"><div class="csv-history-empty">Loading...</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slang Manager Modal (MISD Only) -->
+    <div id="lexiconModal" class="modal-overlay">
+        <div class="modal-card" style="width: min(92%, 680px);">
+            <h3 style="color:var(--text-title); margin-bottom: 6px;">Dynamic Taglish Slang Manager</h3>
+            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom: 18px;">Register and tune emerging campus vernacular without code deployment.</p>
+
+            <div style="display: grid; grid-template-columns: 2fr 1.5fr 1fr; gap: 10px; margin-bottom: 16px;">
+                <input type="text" id="newWord" placeholder="e.g., goods, petiks, sabaw" class="select-input" style="margin-bottom:0;">
+                <select id="newCategory" class="select-input" style="margin-bottom:0;">
+                    <option value="positive">Positive Term</option>
+                    <option value="negative">Negative Term</option>
+                    <option value="intensifiers">Intensifier</option>
+                    <option value="negations">Negation</option>
+                    <option value="profanity">Profanity (hidden with ***)</option>
+                </select>
+                <button class="btn-action" onclick="addLexiconTerm()">Add Term</button>
+            </div>
+
+            <div style="max-height: 280px; overflow-y: auto; border: 1px solid var(--border-light); border-radius: 8px;">
+                <table style="width: 100%;">
+                    <thead>
+                        <tr><th>Term</th><th>Category</th><th>Action</th></tr>
+                    </thead>
+                    <tbody id="lexiconTableBody"></tbody>
+                </table>
+            </div>
+
+            <div style="text-align: right; margin-top: 18px;">
+                <button class="btn-nav" onclick="closeLexiconModal()">Close Manager</button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- AI Confusion Matrix & F1-Score Evaluation Modal (MISD Only) -->
+    {% if role == 'MISD' %}
+    <div id="modelEvalModal" class="modal-overlay">
+        <div class="modal-card" style="width: min(95%, 920px); max-height: 92vh; overflow-y: auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:10px;">
+                <div>
+                    <span style="font-size:0.72rem; font-weight:800; color:#34d399; text-transform:uppercase; letter-spacing:0.8px;">📊 Quantitative Thesis Validation</span>
+                    <h3 style="color:var(--text-title); font-size:1.25rem; margin-top:2px;">Hybrid XLM-RoBERTa + Taglish Lexicon Evaluation</h3>
+                </div>
+                <button class="btn-nav" onclick="closeModelEvalModal()" style="padding:5px 12px; font-size:0.8rem;">✕ Close</button>
+            </div>
+
+            <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:16px; line-height:1.5;">
+                Computes multi-class <strong>Accuracy, Precision, Recall, Macro-F1, and Weighted-F1</strong> comparing the AI's initial prediction (<code>ai_sentiment</code>) against human-verified ground truth (<code>human_sentiment</code>) or the 30-item Taglish Gold Benchmark.
+            </p>
+
+            <!-- Mode Switcher & Seed Button -->
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:18px;">
+                <div class="dept-filter-bar">
+                    <button type="button" id="evalTabVerified" class="dept-tab active" onclick="switchEvalMode('verified')">🎯 Human-Verified Records</button>
+                    <button type="button" id="evalTabBenchmark" class="dept-tab" onclick="switchEvalMode('benchmark')">🧪 30-Item Taglish Gold Benchmark</button>
+                </div>
+                <button type="button" class="btn-nav" onclick="seedBenchmarkSuite()" style="border-color:rgba(16,185,129,0.45); color:#34d399; font-weight:700;">
+                    📥 Seed 30 Benchmark Cases into Testing Logs
+                </button>
+            </div>
+
+            <!-- Summary KPIs -->
+            <div class="eval-kpi-grid">
+                <div class="eval-kpi-card" style="border-top-color:#10b981;">
+                    <div class="eval-kpi-label">Overall Accuracy</div>
+                    <div class="eval-kpi-val" style="color:#10b981;" id="evalAccuracy">0.0%</div>
+                    <div class="eval-kpi-sub" id="evalCorrectSub">0 / 0 correct</div>
+                </div>
+                <div class="eval-kpi-card" style="border-top-color:#3b82f6;">
+                    <div class="eval-kpi-label">Macro F1-Score</div>
+                    <div class="eval-kpi-val" style="color:#60a5fa;" id="evalMacroF1">0.0%</div>
+                    <div class="eval-kpi-sub" id="evalWeightedF1Sub">Weighted F1: 0.0%</div>
+                </div>
+                <div class="eval-kpi-card" style="border-top-color:#f59e0b;">
+                    <div class="eval-kpi-label">Macro Precision</div>
+                    <div class="eval-kpi-val" style="color:#fbbf24;" id="evalMacroPrec">0.0%</div>
+                    <div class="eval-kpi-sub">Exactness across classes</div>
+                </div>
+                <div class="eval-kpi-card" style="border-top-color:#a855f7;">
+                    <div class="eval-kpi-label">Macro Recall</div>
+                    <div class="eval-kpi-val" style="color:#c084fc;" id="evalMacroRec">0.0%</div>
+                    <div class="eval-kpi-sub">Sensitivity across classes</div>
+                </div>
+            </div>
+
+            <div id="evalEmptyNotice" class="privacy-note" style="display:none; margin-bottom:16px;">
+                ℹ️ No human-verified records yet. Click any row in the Feedback Logs table to confirm/override its label, or click <strong>"Seed 30 Benchmark Cases into Testing Logs"</strong> above (or switch to the <strong>30-Item Taglish Gold Benchmark</strong> tab) to view live metrics immediately.
+            </div>
+
+            <!-- Confusion Matrix + Per-Class Metrics Grid -->
+            <div style="display:grid; grid-template-columns: 1fr 1.25fr; gap:18px; margin-bottom:18px;">
+                <!-- 3x3 Confusion Matrix -->
+                <div style="background:rgba(7,13,29,0.55); border:1px solid var(--border-light); border-radius:var(--radius-md); padding:16px;">
+                    <div style="font-size:0.76rem; font-weight:800; color:var(--text-title); text-transform:uppercase; margin-bottom:4px;">
+                        3×3 Confusion Matrix
+                    </div>
+                    <div style="font-size:0.72rem; color:var(--text-muted); margin-bottom:8px;">
+                        Rows = <strong>Actual Ground Truth</strong> &bull; Columns = <strong>AI Predicted</strong>
+                    </div>
+                    <table class="cm-table">
+                        <thead>
+                            <tr>
+                                <th>Actual \ Pred</th>
+                                <th style="color:var(--badge-pos);">Pred Pos</th>
+                                <th style="color:var(--badge-neu);">Pred Neu</th>
+                                <th style="color:var(--badge-neg);">Pred Neg</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cmTableBody"></tbody>
+                    </table>
+                </div>
+
+                <!-- Per-Class Precision / Recall / F1 Table -->
+                <div style="background:rgba(7,13,29,0.55); border:1px solid var(--border-light); border-radius:var(--radius-md); padding:16px;">
+                    <div style="font-size:0.76rem; font-weight:800; color:var(--text-title); text-transform:uppercase; margin-bottom:10px;">
+                        Per-Class Precision, Recall & F1-Score
+                    </div>
+                    <div class="table-responsive">
+                        <table style="width:100%;">
+                            <thead>
+                                <tr>
+                                    <th style="padding:10px 12px;">Class</th>
+                                    <th style="padding:10px 12px;">Precision</th>
+                                    <th style="padding:10px 12px;">Recall</th>
+                                    <th style="padding:10px 12px;">F1-Score</th>
+                                    <th style="padding:10px 12px;">TP / FP / FN</th>
+                                    <th style="padding:10px 12px;">Support</th>
+                                </tr>
+                            </thead>
+                            <tbody id="perClassTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Disagreements / Error Analysis Log -->
+            <div style="background:rgba(7,13,29,0.55); border:1px solid var(--border-light); border-radius:var(--radius-md); padding:16px;">
+                <div style="font-size:0.76rem; font-weight:800; color:var(--text-title); text-transform:uppercase; margin-bottom:6px;">
+                    🔍 Disagreement & Misclassification Log (Actual ≠ AI Predicted)
+                </div>
+                <div id="evalDisagreementsBox" style="max-height:190px; overflow-y:auto; font-size:0.8rem; color:var(--text-body);"></div>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; margin-top:16px;">
+                <button class="btn-action" onclick="closeModelEvalModal()">Done</button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Top Navigation Header -->
+    <header class="topbar">
+        <div class="brand-unit">
+            <img src="{{ url_for('static', filename='ccclogo.png') }}" alt="CCC Logo" class="brand-logo-img">
+            <div>
+                <div class="brand-title">Sentiment Evaluation System</div>
+                <div class="brand-subtitle">City College of Calamba</div>
+            </div>
+        </div>
+        <div class="nav-actions" id="navActionsTarget">
+            <button type="button" class="btn-nav btn-tour" onclick="CCCTour.start()" title="Take a guided tour of this dashboard" style="border-color:rgba(245,158,11,0.4); color:var(--txt-gold);">❓ Tour</button>
+            {% if role == 'MISD' %}
+            <button class="btn-nav" onclick="openCsvModal()">Upload CSV</button>
+            {% endif %}
+            <button class="btn-nav" onclick="exportCurrentCsv()">Export CSV</button>
+            {% if role == 'MISD' %}
+            <button class="btn-nav" onclick="openLexiconModal()">Slang Manager</button>
+            <button class="btn-nav" id="evalNavBtn" onclick="openModelEvalModal()" style="border-color:rgba(16,185,129,0.45); color:#34d399; font-weight:700;">📊 AI Evaluation (F1)</button>
+            {% endif %}
+            <span class="nav-sep" style="font-size:0.82rem; color:var(--text-muted); margin: 0 4px;">|</span>
+            <span class="role-badge">{{ role }}</span>
+            <span class="nav-user" style="font-size:0.86rem; font-weight:600; color:var(--text-title);">{{ username }}</span>
+            <button type="button" id="themeToggle" class="btn-nav theme-toggle" onclick="toggleTheme()" aria-label="Switch to light mode" aria-pressed="false" title="Switch to light mode">&#9728;&#65039;</button>
+            <button class="btn-nav btn-logout" onclick="openLogoutModal()">Sign Out</button>
+        </div>
+    </header>
+
+    <main class="workspace">
+        <!-- Data Source Integrity Tabs -->
+        <div class="source-filter-bar">
+            <button class="source-tab active" onclick="switchSource('Portal', this)">📱 Portal Submissions</button>
+            {% if role == 'MISD' %}
+            <button class="source-tab" onclick="switchSource('CSV', this)">📁 Imported CSVs</button>
+            <button class="source-tab" onclick="switchSource('Testing', this)">🧪 AI Testing Logs</button>
+            {% endif %}
+        </div>
+
+        <!-- Controls Toolbar: Program/Sentiment Tabs + Term/Year Filter -->
+        <div class="controls-toolbar" id="dataSortBarTarget">
+            {% if role == 'MISD' %}
+            <div style="display:flex; flex-direction:column; gap:10px; width:100%;">
+                <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+                    <!-- New Tab Row 1: Program Sort -->
+                    <div class="dept-filter-bar">
+                        <span class="filter-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Program</span>
+                        <button class="dept-tab active" onclick="switchProgram('ALL', this)">All Programs</button>
+                        <button class="dept-tab" onclick="switchProgram('BSCS', this)">BSCS</button>
+                        <button class="dept-tab" onclick="switchProgram('BSIT', this)">BSIT</button>
+                    </div>
+
+                    <!-- New Tab Row 2: Sentiment Sort -->
+                    <div class="dept-filter-bar">
+                        <span class="filter-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>Sentiment</span>
+                        <button class="dept-tab active" onclick="switchSentiment('ALL', this)">All Sentiments</button>
+                        <button class="dept-tab" style="color:var(--badge-pos);" onclick="switchSentiment('Positive', this)">Positive</button>
+                        <button class="dept-tab" style="color:var(--badge-neg);" onclick="switchSentiment('Negative', this)">Negative</button>
+                        <button class="dept-tab" style="color:var(--badge-neu);" onclick="switchSentiment('Neutral', this)">Neutral</button>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <!-- Faculty View -->
+            <div class="dept-filter-bar">
+                <button class="dept-tab active">{{ user_dept }} — [{{ user_program }}]</button>
+            </div>
+            {% endif %}
+
+            <!-- Academic Year & Semester Selectors -->
+            <div class="term-selector-group" id="termFilterTarget" style="margin-left: auto; margin-top: 10px;">
+                <span id="activeTermBadge" class="role-badge" style="background:rgba(16,185,129,0.12); color:#34d399; border-color:rgba(16,185,129,0.3); font-size:0.7rem;" title="New Town Hall posts are tagged with this term">
+                    📌 Active: 2026-2027 • 1st Semester
+                </span>
+
+                <select id="filterYear" class="term-select" onchange="onFilterChange()"></select>
+
+                <select id="filterSem" class="term-select" onchange="onFilterChange()">
+                    <option value="ALL">All Semesters</option>
+                    <option value="1st Semester" selected>1st Semester</option>
+                    <option value="2nd Semester">2nd Semester</option>
+                </select>
+
+                {% if role == 'MISD' %}
+                <button class="btn-nav" onclick="setAsActiveTerm()" style="border-color:rgba(16,185,129,0.4); color:#34d399;" title="Set the selected Year & Semester as the active institutional term for all new posts">📌 Set Active Term</button>
+                <button class="btn-nav" onclick="openAddYearModal()" style="border-color:rgba(37,99,235,0.4); color:var(--txt-blue);">+ Add Year</button>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Prescriptive Analytics Alert -->
+        <div class="alert-panel" id="prescriptiveBoxTarget">
+            <div class="alert-header">
+                <strong style="color:var(--text-title); font-size:0.92rem;">AI Action Alerts</strong>
+                <span class="alert-tag alert-tag-stable" id="prescriptiveTag">Baseline</span>
+            </div>
+            <div class="alert-text" id="prescriptiveText">Loading AI recommendations...</div>
+        </div>
+
+        <!-- KPI Metrics -->
+        <div id="privacyNotice" class="privacy-note" role="status" style="display:none;"></div>
+        <div id="profanityNote" class="info-note" role="status" style="display:none;"></div>
+        <section class="kpi-row" id="kpiRowTarget">
+            <div class="kpi-card" style="--accent: var(--primary);">
+                <div class="kpi-header">Total Evaluated</div>
+                <div class="kpi-value" id="kpi-total">0</div>
+                <div class="kpi-sub">Total student comments logged</div>
+            </div>
+            <div class="kpi-card" style="--accent: var(--badge-pos);">
+                <div class="kpi-header">Positive Polarity</div>
+                <div class="kpi-value" style="color:var(--badge-pos);" id="kpi-pos">0</div>
+                <div class="kpi-sub">Commendations & approval</div>
+            </div>
+            <div class="kpi-card" style="--accent: var(--badge-neg);">
+                <div class="kpi-header">Negative Polarity</div>
+                <div class="kpi-value" style="color:var(--badge-neg);" id="kpi-neg">0</div>
+                <div class="kpi-sub">Actionable grievances logged</div>
+            </div>
+            <div class="kpi-card" style="--accent: var(--badge-neu);">
+                <div class="kpi-header">Neutral Feedback</div>
+                <div class="kpi-value" style="color:var(--badge-neu);" id="kpi-neu">0</div>
+                <div class="kpi-sub">Descriptive remarks</div>
+            </div>
+        </section>
+
+        <!-- Evaluation Console + Visualizations -->
+        <div class="main-grid" {% if role == 'MISD' %}style="grid-template-columns: 1.1fr 1fr;"{% else %}style="grid-template-columns: 1fr;"{% endif %}>
+            
+            {% if role == 'MISD' %}
+            <!-- Diagnostic Sandbox (MISD Only) -->
+            <section class="panel" id="narrativePanelTarget">
+                <div class="panel-heading">
+                    <span>AI Testing Tool</span>
+                    <span style="font-size:0.75rem; color:var(--text-muted);">MISD Clearance Only</span>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1.3fr; gap: 8px; margin-bottom: 10px;">
+                    <select id="singleProgram" class="select-input" style="margin-bottom:0;">
+                        <option value="BSCS">BSCS</option>
+                        <option value="BSIT">BSIT</option>
+                    </select>
+                    <select id="singleYear" class="select-input" style="margin-bottom:0;"></select>
+                    <select id="singleSem" class="select-input" style="margin-bottom:0;">
+                        <option value="1st Semester">1st Sem</option>
+                        <option value="2nd Semester">2nd Sem</option>
+                    </select>
+                    <select id="singleExpectedSentiment" class="select-input" style="margin-bottom:0;" title="Optional: Tag expected ground-truth sentiment to include in Confusion Matrix">
+                        <option value="">Ground Truth: Auto (None)</option>
+                        <option value="Positive">Expected: Positive</option>
+                        <option value="Neutral">Expected: Neutral</option>
+                        <option value="Negative">Expected: Negative</option>
+                    </select>
+                </div>
+
+                <textarea id="singleComment" class="textarea-input" placeholder="Test individual student comments here to see how the AI scores words and determines sentiment..."></textarea>
+                <button class="btn-action" onclick="submitSingleFeedback()">Test AI Analysis</button>
+            </section>
+            {% endif %}
+
+            <!-- Multi-Dimensional Scorecard -->
+            <section class="panel" id="scorecardPanelTarget">
+                <div class="panel-heading">
+                    <span>Feedback Category Overview</span>
+                    <span style="font-size:0.75rem; color:var(--text-muted);" id="currentDeptLabel">
+                        {% if role == 'MISD' %}DCI OVERVIEW{% else %}DCI — {{ user_program }}{% endif %}
+                    </span>
+                </div>
+                <div class="charts-double" {% if role != 'MISD' %}style="grid-template-columns: 1fr 1fr; max-width: 860px; margin: 0 auto;"{% endif %}>
+                    <div class="chart-box">
+                        <img id="pieChartImg" src="" alt="Polarity Doughnut Chart">
+                    </div>
+                    <div class="chart-box">
+                        <img id="aspectBarImg" src="" alt="Aspect Breakdown Bar Chart">
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Keyword Cloud & Top Lexicon Terms -->
+        <section class="panel" id="keywordCloudTarget" style="margin-bottom: 24px;">
+            <div class="panel-heading" style="margin-bottom: 8px;">
+                <span>🔤 Top Recurring Lexicon & Keyword Cloud</span>
+                <span style="font-size:0.75rem; color:var(--text-muted);">Click any term to filter records table</span>
+            </div>
+            <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">Frequently extracted bilingual student vocabulary from active feedback narratives.</p>
+            <div id="keywordCloudContainer" class="keyword-cloud-box">
+                <span style="color:var(--text-muted); font-size:0.8rem;">Loading recurring lexicon...</span>
+            </div>
+        </section>
+
+        <!-- Attributed Data Logs with Pagination & Search Bar -->
+        <section class="panel" id="logsPanelTarget">
+            <div class="table-toolbar">
+                <div class="panel-heading" style="margin-bottom:0;">
+                    <span>Student Feedback Logs (Click row to see AI analysis)</span>
+                </div>
+
+                <!-- Live Keyword Search Bar -->
+                <div class="search-input-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="searchInput" placeholder="Search narrative keywords or program..." oninput="onSearchInput(this.value)">
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="logs-table">
+                    <thead>
+                        <tr>
+                            <th style="width:9%;">Program</th>
+                            <th style="width:13%;">Academic Term</th>
+                            <th style="width:32%;">Student Narrative</th>
+                            <th style="width:10%;">Polarity</th>
+                            <th style="width:36%;">Aspects & Word Impact Scaling (-1, 0, 1)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logsTableBody"></tbody>
+                </table>
+            </div>
+
+            <!-- Server-Side Pagination Controller -->
+            <div class="pagination-bar">
+                <span id="pageSummary">Showing 0 to 0 of 0 records</span>
+                <div class="pagination-controls">
+                    <button class="btn-page" id="btnPrevPage" onclick="changePage(-1)" disabled>❮ Previous</button>
+                    <span id="pageIndicator" style="font-weight: 600; color: var(--text-title); padding: 0 4px;">Page 1 of 1</span>
+                    <button class="btn-page" id="btnNextPage" onclick="changePage(1)" disabled>Next ❯</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // SECURITY FIX: XSS Protection and URL Sanitization
+        const _E = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
+        const esc = v => String(v ?? '').replace(/[&<>"']/g, c => _E[c]);
+        const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content || '';
+
+        // ==========================================================
+        // SYSTEM ALERTS & TOAST NOTIFICATIONS
+        // ==========================================================
+        const SYS_ALERT_ICONS = {
+            error: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+            warning: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+            success: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="8 12.5 11 15.5 16 9"/></svg>',
+            info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
+        };
+        const SYS_ALERT_TITLES = { error: 'Something went wrong', warning: 'Please check this' };
+        const _SYS_RE_ERROR = /\b(fail(ed|ure|s)?|error|could not|couldn't|unable|invalid|denied|permission|not allowed|went wrong|unavailable|too long|too large|expired|not found|conflict|duplicate|malformed|time(d)? ?out|try again|too many|busy)\b/i;
+        const _SYS_RE_WARN = /\b(please|required|must|select|choose|input|enter|missing|locked|cannot|can't)\b/i;
+        const _SYS_RE_OK = /\b(success(fully)?|added|stored|removed|completed|registered|saved|created|updated|posted|deleted|sent|exported|downloaded)\b/i;
+
+        function _sysClassify(msg) {
+            if (_SYS_RE_ERROR.test(msg)) return 'error';
+            if (_SYS_RE_WARN.test(msg)) return 'warning';
+            if (_SYS_RE_OK.test(msg)) return 'success';
+            return 'info';
+        }
+
+        let _sysAlertOpen = false, _sysAlertCurrent = null, _sysAlertFocus = null, _sysAlertEls = null;
+        const _sysAlertQueue = [];
+
+        function _sysAlertDom() {
+            if (_sysAlertEls) return _sysAlertEls;
+            const ov = document.createElement('div');
+            ov.className = 'sys-alert-overlay';
+            ov.setAttribute('role', 'alertdialog');
+            ov.setAttribute('aria-modal', 'true');
+            ov.setAttribute('aria-labelledby', 'sysAlertTitle');
+            ov.setAttribute('aria-describedby', 'sysAlertMsg');
+            ov.innerHTML = '<div class="sys-alert-card"><div class="sys-alert-icon"></div><h3 class="sys-alert-title" id="sysAlertTitle"></h3><p class="sys-alert-msg" id="sysAlertMsg"></p><div class="sys-alert-more"></div><button type="button" class="sys-alert-btn">Got it</button></div>';
+            document.body.appendChild(ov);
+            _sysAlertEls = { ov, card: ov.firstChild, icon: ov.querySelector('.sys-alert-icon'), title: ov.querySelector('.sys-alert-title'), msg: ov.querySelector('.sys-alert-msg'), more: ov.querySelector('.sys-alert-more'), btn: ov.querySelector('.sys-alert-btn') };
+            _sysAlertEls.btn.addEventListener('click', closeSysAlert);
+            ov.addEventListener('mousedown', (e) => { if (e.target === ov) closeSysAlert(); });
+            ov.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') { e.stopPropagation(); closeSysAlert(); }
+                else if (e.key === 'Tab') { e.preventDefault(); _sysAlertEls.btn.focus(); }
+            });
+            return _sysAlertEls;
+        }
+
+        function _sysAlertMoreLabel() {
+            const n = _sysAlertQueue.length;
+            return n ? (n === 1 ? '1 more message after this' : n + ' more messages after this') : '';
+        }
+
+        function _sysAlertRender(msg, kind) {
+            const d = _sysAlertDom();
+            _sysAlertCurrent = { msg, kind };
+            d.card.className = 'sys-alert-card type-' + kind;
+            d.icon.innerHTML = SYS_ALERT_ICONS[kind];
+            d.title.textContent = SYS_ALERT_TITLES[kind];
+            d.msg.textContent = msg;
+            d.more.textContent = _sysAlertMoreLabel();
+            d.ov.style.display = 'flex';
+            void d.ov.offsetWidth;
+            d.ov.classList.add('is-open');
+            _sysAlertOpen = true;
+            d.btn.focus();
+        }
+
+        function _sysAlertShow(msg, kind) {
+            if (_sysAlertOpen) {
+                const same = (a) => a.msg === msg && a.kind === kind;
+                if (same(_sysAlertCurrent) || _sysAlertQueue.some(same)) return;
+                _sysAlertQueue.push({ msg, kind });
+                _sysAlertEls.more.textContent = _sysAlertMoreLabel();
+                return;
+            }
+            _sysAlertFocus = document.activeElement;
+            _sysAlertRender(msg, kind);
+        }
+
+        function closeSysAlert() {
+            if (!_sysAlertOpen) return;
+            const d = _sysAlertEls;
+            d.ov.classList.remove('is-open');
+            _sysAlertOpen = false;
+            if (_sysAlertQueue.length) {
+                const next = _sysAlertQueue.shift();
+                setTimeout(() => { if (!_sysAlertOpen) _sysAlertRender(next.msg, next.kind); }, 230);
+                return;
+            }
+            setTimeout(() => { if (!_sysAlertOpen) d.ov.style.display = 'none'; }, 220);
+            try { if (_sysAlertFocus && _sysAlertFocus.focus) _sysAlertFocus.focus(); } catch (e) {}
+        }
+
+        let _toastTimer;
+        function _sysToastShow(msg, kind) {
+            const t = document.getElementById('toast');
+            if (!t) return;
+            t.className = 'toast-' + kind;
+            t.innerHTML = '<span class="sys-toast-ic">' + SYS_ALERT_ICONS[kind] + '</span><span class="sys-toast-tx"></span>';
+            t.querySelector('.sys-toast-tx').textContent = msg;
+            t.style.display = 'flex';
+            void t.offsetWidth;
+            t.classList.add('show');
+            clearTimeout(_toastTimer);
+            _toastTimer = setTimeout(() => {
+                t.classList.remove('show');
+                setTimeout(() => { if (!t.classList.contains('show')) t.style.display = 'none'; }, 260);
+            }, 3500);
+        }
+
+        function showToast(msg, type) {
+            msg = (msg === null || msg === undefined) ? '' : String(msg).trim();
+            if (!msg) return;
+            const kind = (type === 'error' || type === 'warning' || type === 'success' || type === 'info') ? type : _sysClassify(msg);
+            if (kind === 'error' || kind === 'warning') _sysAlertShow(msg, kind);
+            else _sysToastShow(msg, kind);
+        }
+
+        // ==========================================================
+        // THEME TOGGLE & SESSION GUARD
+        // ==========================================================
+        const THEME_KEY = 'ccc_theme';
+        function currentTheme() { return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark'; }
+        function applyTheme(theme, persist = true, notify = true) {
+            const t = theme === 'light' ? 'light' : 'dark';
+            const changed = currentTheme() !== t;
+            document.documentElement.setAttribute('data-theme', t);
+            if (persist) { try { localStorage.setItem(THEME_KEY, t); } catch (e) { /* storage blocked: preference just won't persist */ } }
+            const btn = document.getElementById('themeToggle');
+            if (btn) {
+                const next = t === 'light' ? 'dark' : 'light';
+                btn.textContent = t === 'light' ? '\uD83C\uDF19' : '\u2600\uFE0F';
+                btn.setAttribute('aria-pressed', String(t === 'light'));
+                btn.setAttribute('aria-label', 'Switch to ' + next + ' mode');
+                btn.title = 'Switch to ' + next + ' mode';
+            }
+            if (notify && changed) document.dispatchEvent(new CustomEvent('themechange', { detail: { theme: t } }));
+        }
+        function toggleTheme() {
+            const root = document.documentElement;
+            root.classList.add('theme-anim');
+            setTimeout(() => root.classList.remove('theme-anim'), 350);
+            applyTheme(currentTheme() === 'light' ? 'dark' : 'light');
+        }
+        window.addEventListener('storage', (e) => { if (e.key === THEME_KEY && e.newValue) applyTheme(e.newValue, false); });
+        applyTheme(currentTheme(), false, false);
+
+        let _redirectingToLogin = false;
+        function forceLogin(msg) {
+            if (_redirectingToLogin) return;
+            _redirectingToLogin = true;
+            document.documentElement.style.visibility = 'hidden';
+            if (msg) showToast(msg, 'warning');
+            window.location.replace('/login');
+        }
+        async function verifySession() {
+            try {
+                const r = await fetch('/api/session_ping', { cache: 'no-store', credentials: 'same-origin' });
+                if (r.status === 401 || r.redirected) { forceLogin(); return false; }
+                return r.ok;
+            } catch (e) {
+                return false;
+            }
+        }
+        window.addEventListener('pageshow', function (event) {
+            const nav = (performance.getEntriesByType && performance.getEntriesByType('navigation')[0]) || null;
+            if (event.persisted || (nav && nav.type === 'back_forward')) {
+                document.documentElement.style.visibility = 'hidden';
+                verifySession().then(ok => {
+                    if (ok) document.documentElement.style.visibility = '';
+                    else if (!_redirectingToLogin) window.location.reload();
+                });
+            }
+        });
+        document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') verifySession(); });
+
+        function friendlyStatus(s) {
+            if (s === 401) return 'Your session has expired. Please sign in again.';
+            if (s === 403) return 'You do not have permission to do that.';
+            if (s === 404) return 'The requested item was not found.';
+            if (s === 413) return 'That upload or post is too large.';
+            if (s === 429) return 'Too many requests. Please wait a moment and try again.';
+            if (s >= 500) return 'The server ran into a problem. Please try again shortly.';
+            return 'The request could not be completed.';
+        }
+
+        async function apiFetch(url, options = {}, timeoutMs = 30000) {
+            const ctrl = new AbortController();
+            const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+            let res;
+            try {
+                res = await fetch(url, { credentials: 'same-origin', ...options, signal: ctrl.signal });
+            } catch (err) {
+                const msg = (err && err.name === 'AbortError') ? 'The server took too long to respond. Please try again.' : (navigator.onLine === false ? 'You appear to be offline. Check your connection and try again.' : 'Could not reach the server. Please try again.');
+                const e = new Error(msg); e.userMessage = msg; e.network = true; throw e;
+            } finally { clearTimeout(timer); }
+            const _json = res.json.bind(res);
+            res.json = async () => { try { return await _json(); } catch (e) { return { error: friendlyStatus(res.status) }; } };
+            if (res.status === 401) forceLogin('Your session has expired. Redirecting to sign in...');
+            return res;
+        }
+
+        async function readJson(res, fallback = 'Request failed.') {
+            const data = await res.json();
+            if (!res.ok) { const e = new Error((data && data.error) || fallback); e.userMessage = e.message; throw e; }
+            return data;
+        }
+
+        async function downloadFile(url, fallbackName) {
+            showLoader("Preparing download...");
+            try {
+                const res = await apiFetch(url);
+                if (!res.ok) { const d = await res.json(); throw Object.assign(new Error(d.error || 'Download failed.'), { userMessage: d.error || 'Download failed.' }); }
+                const blob = await res.blob();
+                const m = /filename="?([^";]+)"?/i.exec(res.headers.get('Content-Disposition') || '');
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = m ? m[1] : fallbackName;
+                document.body.appendChild(a); a.click(); a.remove();
+                setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+            } catch (e) { showToast(e.userMessage || e.message || 'Download failed.', 'error'); } finally { hideLoader(); }
+        }
+
+        window.addEventListener('unhandledrejection', (ev) => {
+            console.error('Unhandled promise rejection:', ev.reason);
+            try { showToast((ev.reason && ev.reason.userMessage) || 'Something went wrong. Please try again.', 'error'); } catch (e) {}
+            ev.preventDefault();
+        });
+
+        // UI/UX OVERHAUL: Shared smooth modal open/close
+        function openModal(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.style.display = 'flex';
+            requestAnimationFrame(() => el.classList.add('modal-open'));
+        }
+        function closeModal(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.classList.remove('modal-open');
+            setTimeout(() => { if (!el.classList.contains('modal-open')) el.style.display = 'none'; }, 220);
+        }
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay.modal-open').forEach(el => closeModal(el.id));
+            }
+        });
+
+        // BACK-BUTTON LOCK
+        // A single sentinel history entry is not enough: a quick burst of Back presses can register twice before the handler re-arms it,
+        // which dropped people onto the page they signed in from. So we keep a buffer of sentinel entries and top it back up after every Back/Forward.
+        const _GUARD_DEPTH = 6;
+        let _guardTop = 0, _guardToastAt = 0, _guardGestureDone = false;
+        function _guardLevel() { const st = history.state; return (st && st.portalGuard && typeof st.guardLevel === 'number') ? st.guardLevel : -1; }
+        function _guardFill() {
+            try { for (let n = _guardLevel() + 1; n <= _guardTop; n++) history.pushState({ portalGuard: true, guardLevel: n }, document.title, location.href); } catch (e) { /* history API blocked */ }
+        }
+        try { history.replaceState({ portalGuard: true, guardLevel: 0 }, document.title, location.href); } catch (e) { /* history API blocked */ }
+        _guardTop = _GUARD_DEPTH;
+        _guardFill();
+        // Browsers skip history entries that a page added before the visitor interacted with it, so add a second set on the first real interaction.
+        ['pointerdown', 'keydown', 'touchstart'].forEach(function (evt) {
+            window.addEventListener(evt, function () {
+                if (_guardGestureDone || window._loggingOut) return;
+                _guardGestureDone = true;
+                _guardTop += _GUARD_DEPTH;
+                _guardFill();
+            }, { passive: true, capture: true });
+        });
+        window.addEventListener('popstate', function () {
+            if (window._loggingOut) return;
+            _guardFill();
+            const now = Date.now();
+            if (now - _guardToastAt > 2000) {   // a burst of Back presses should produce one notice, not a pile of them
+                _guardToastAt = now;
+                showToast("Your session is locked while you are signed in. Please use 'Sign Out' to end it.", 'info');
+            }
+        });
+
+        // CINEMATIC SPLASH SCREEN CONTROLLER
+        function dismissSplash() {
+            const splash = document.getElementById('splashCurtain');
+            if (!splash || splash.classList.contains('dissolve')) return;
+            splash.classList.add('dissolve');
+            setTimeout(() => { splash.style.display = 'none'; }, 850);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const splash = document.getElementById('splashCurtain');
+            if (!splash) return;
+            if (sessionStorage.getItem('ccc_dashboard_splash_seen') === 'true') {
+                splash.style.display = 'none';
+                return;
+            }
+            sessionStorage.setItem('ccc_dashboard_splash_seen', 'true');
+            setTimeout(() => { dismissSplash(); }, 2800);
+        });
+
+        const userRole = {{ role | tojson | safe }};
+        let currentPage = 1;
+        const perPage = 10;
+        let currentSearch = "";
+        let currentSource = "Portal";
+        
+        let currentProgram = "ALL";
+        let currentSentiment = "ALL";
+
+        let searchDebounceTimer = null;
+        let cachedYears = ["2024-2025", "2025-2026", "2026-2027"];
+        let feedbackLogsCache = [];
+        document.addEventListener('themechange', () => { fetchAnalytics(); });   // charts are images: re-render them in the new palette
+
+        let _loaderTimer;
+        function showLoader(message = "Processing Feedback...", timeoutMs = 30000) {
+            const textEl = document.getElementById('loaderText');
+            if(textEl) textEl.innerText = message;
+            const loaderEl = document.getElementById('loader');
+            if(loaderEl) loaderEl.style.display = 'flex';
+            
+            clearTimeout(_loaderTimer);
+            _loaderTimer = setTimeout(() => {
+                hideLoader();
+                showToast("The request is taking too long. Please check your connection or try again.", "warning");
+            }, timeoutMs); 
+        }
+        function hideLoader() { 
+            clearTimeout(_loaderTimer); 
+            const loaderEl = document.getElementById('loader');
+            if(loaderEl) loaderEl.style.display = 'none'; 
+        }
+
+        function openLogoutModal() { openModal('logoutModal'); }
+        function closeLogoutModal() { closeModal('logoutModal'); }
+        
+        let _farewellSlowTimer, _farewellStatusTimer;
+        const FAREWELL_MIN_MS = 2600;   // long enough to actually read the goodbye
+        function confirmLogout() {
+            if (window._loggingOut) return;
+            window._loggingOut = true;            // lets the back-button guard stand down
+            const form = document.getElementById('logoutForm');
+            if (!form) { window.location.href = '/login'; return; }
+
+            closeLogoutModal();
+            const screen = document.getElementById('farewellScreen');
+            if (screen) {
+                const nameEl = document.getElementById('farewellName');
+                if (nameEl && window.APP_USERNAME) nameEl.textContent = window.APP_USERNAME;
+                screen.classList.remove('slow');
+                screen.style.display = 'flex';
+                screen.classList.add('show');
+                requestAnimationFrame(() => screen.classList.add('visible'));
+
+                const status = document.getElementById('farewellStatus');
+                const steps = ['Isinasara ang iyong session nang ligtas...', 'Nililinis ang device na ito...', 'Maraming salamat! Hanggang sa muli.'];
+                let i = 0;
+                if (status) status.textContent = steps[0];
+                clearInterval(_farewellStatusTimer);
+                _farewellStatusTimer = setInterval(() => { i = Math.min(i + 1, steps.length - 1); if (status) status.textContent = steps[i]; }, 1000);
+
+                clearTimeout(_farewellSlowTimer);
+                _farewellSlowTimer = setTimeout(() => {
+                    screen.classList.add('slow');
+                    if (status) status.textContent = 'Medyo matagal ito. This is taking longer than usual.';
+                }, 9000);
+            }
+
+            // Really sign out right away, in the background, so the session is closed even if the tab is closed mid-goodbye.
+            const started = performance.now();
+            const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const minWait = reduced ? 900 : FAREWELL_MIN_MS;
+            let signedOut = false;
+            fetch(form.action, { method: 'POST', body: new URLSearchParams(new FormData(form)), credentials: 'same-origin', redirect: 'follow' })
+                .then(r => { signedOut = r.ok; }).catch(() => { signedOut = false; })
+                .then(() => {
+                    const wait = Math.max(0, minWait - (performance.now() - started));
+                    setTimeout(() => { if (signedOut) window.location.replace('/login'); else form.submit(); }, wait);
+                });
+        }
+
+        function retryLogout() {
+            const form = document.getElementById('logoutForm');
+            if (form) form.submit();
+        }
+
+        // If the page is restored from the back/forward cache, never leave the farewell screen stuck on top
+        window.addEventListener('pageshow', (e) => {
+            if (!e.persisted) return;
+            clearInterval(_farewellStatusTimer); clearTimeout(_farewellSlowTimer);
+            const screen = document.getElementById('farewellScreen');
+            if (screen) { screen.classList.remove('show', 'visible', 'slow'); screen.style.display = ''; }
+            window._loggingOut = false;
+        });
+
+        function openAddYearModal() {
+            if (userRole !== 'MISD') return;
+            const m = document.getElementById('addYearModal');
+            if (m) {
+                document.getElementById('newYearInput').value = '';
+                openModal('addYearModal');
+            }
+        }
+        function closeAddYearModal() {
+            closeModal('addYearModal');
+        }
+
+        async function submitNewYear() {
+            if (userRole !== 'MISD') return;
+            const val = document.getElementById('newYearInput').value.trim();
+            if (!val) return showToast("Please input an academic year.", "warning");
+
+            showLoader("Registering new academic year...");
+            try {
+                const res = await apiFetch('/api/academic_years', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+                    body: JSON.stringify({ year: val })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    closeAddYearModal();
+                    showToast(`Academic Year ${val} successfully added.`, "success");
+                    fetchAnalytics();
+                } else {
+                    showToast(data.error || "Failed to add academic year.", 'error');
+                }
+            } catch (e) {
+                showToast(e.userMessage || "Server error registering academic year.", 'error');
+            } finally {
+                hideLoader();
+            }
+        }
+
+        async function setAsActiveTerm() {
+            if (userRole !== 'MISD') return;
+            const yr = document.getElementById('filterYear')?.value;
+            const sem = document.getElementById('filterSem')?.value;
+            if (!yr || yr === 'ALL' || !sem || sem === 'ALL') {
+                return showToast("Please select a specific Academic Year and Semester in the dropdowns first, then click 'Set Active Term'.", "warning");
+            }
+            showLoader("Updating active institutional term...");
+            try {
+                const res = await apiFetch('/api/settings/active_term', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+                    body: JSON.stringify({ academic_year: yr, semester: sem })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    const badge = document.getElementById('activeTermBadge');
+                    if (badge) badge.textContent = `📌 Active: ${data.academic_year} • ${data.semester}`;
+                    showToast(`Active term set to A.Y. ${data.academic_year} (${data.semester}). All new Town Hall posts will now log under this term.`, "success");
+                } else {
+                    showToast(data.error || "Could not update active term.", "error");
+                }
+            } catch (e) {
+                showToast(e.userMessage || "Server error updating active term.", "error");
+            } finally {
+                hideLoader();
+            }
+        }
+
+        function updateYearDropdowns(yearsList, selectedYear) {
+            cachedYears = yearsList;
+
+            const filterElem = document.getElementById('filterYear');
+            const prevSelected = selectedYear || (filterElem ? filterElem.value : 'ALL');
+
+            let filterHTML = '<option value="ALL">All Academic Years</option>';
+            yearsList.forEach(yr => {
+                const isSel = (yr === prevSelected) ? 'selected' : '';
+                filterHTML += `<option value="${yr}" ${isSel}>A.Y. ${yr}</option>`;
+            });
+            if (filterElem) filterElem.innerHTML = filterHTML;
+
+            const csvYearElem = document.getElementById('csvYear');
+            if (csvYearElem) {
+                let csvHTML = '';
+                yearsList.forEach(yr => {
+                    csvHTML += `<option value="${yr}">A.Y. ${yr}</option>`;
+                });
+                csvYearElem.innerHTML = csvHTML;
+            }
+
+            const singleYearElem = document.getElementById('singleYear');
+            if (singleYearElem) {
+                let singleHTML = '';
+                yearsList.forEach(yr => {
+                    singleHTML += `<option value="${yr}">${yr}</option>`;
+                });
+                singleYearElem.innerHTML = singleHTML;
+            }
+        }
+
+        // NEW SORTING: Program Filter
+        function switchProgram(prog, btn) {
+            currentProgram = prog;
+            currentPage = 1;
+            btn.parentElement.querySelectorAll('.dept-tab').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            let txt = "DCI OVERVIEW";
+            if(prog !== 'ALL') txt = `DCI — ${prog}`;
+            document.getElementById('currentDeptLabel').innerText = txt;
+            fetchAnalytics();
+        }
+
+        // NEW SORTING: Sentiment Filter
+        function switchSentiment(sent, btn) {
+            currentSentiment = sent;
+            currentPage = 1;
+            btn.parentElement.querySelectorAll('.dept-tab').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            fetchAnalytics();
+        }
+
+        function switchSource(src, btn) {
+            currentSource = src;
+            currentPage = 1;
+            document.querySelectorAll('.source-tab').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            fetchAnalytics();
+        }
+
+        function onFilterChange() {
+            currentPage = 1;
+            fetchAnalytics();
+        }
+
+        function onSearchInput(val) {
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(() => {
+                currentSearch = val.trim();
+                currentPage = 1;
+                fetchAnalytics();
+            }, 300);
+        }
+
+        function changePage(delta) {
+            currentPage += delta;
+            fetchAnalytics();
+        }
+
+        async function fetchAnalytics() {
+            try {
+                const yearElem = document.getElementById('filterYear');
+                const semElem = document.getElementById('filterSem');
+
+                const year = yearElem ? yearElem.value : 'ALL';
+                const sem = semElem ? semElem.value : 'ALL';
+
+                const params = new URLSearchParams({
+                    program: currentProgram,
+                    sentiment: currentSentiment,
+                    year: year,
+                    semester: sem,
+                    search: currentSearch,
+                    page: currentPage,
+                    per_page: perPage,
+                    source: currentSource,
+                    theme: currentTheme()
+                });
+
+                const res = await apiFetch(`/api/analytics?${params.toString()}`);
+                const data = await readJson(res, "Could not load data.");
+
+                feedbackLogsCache = data.logs || [];
+
+                if (data.active_term) {
+                    const badge = document.getElementById('activeTermBadge');
+                    if (badge) badge.textContent = `📌 Active: ${data.active_term.academic_year} • ${data.active_term.semester}`;
+                }
+
+                if (data.available_years && data.available_years.length > 0) {
+                    updateYearDropdowns(data.available_years, data.year);
+                }
+
+                const privacyBox = document.getElementById('privacyNotice');
+                if (privacyBox) { privacyBox.style.display = data.suppressed ? 'block' : 'none'; privacyBox.textContent = data.suppressed ? '🔒 ' + (data.privacy_note || 'Details are hidden because too few responses match.') : ''; }
+                const profBox = document.getElementById('profanityNote');
+                if (profBox) {
+                    const n = data.profanity_count || 0;
+                    profBox.style.display = n > 0 ? 'block' : 'none';
+                    profBox.textContent = n > 0 ? `🛡️ ${n} comment${n === 1 ? '' : 's'} here contained profanity. Those words are hidden with asterisks, and the AI still counted them as strong feeling.` : '';
+                }
+                document.getElementById('kpi-total').innerText = data.kpis.total;
+                document.getElementById('kpi-pos').innerText = data.kpis.pos;
+                document.getElementById('kpi-neg').innerText = data.kpis.neg;
+                document.getElementById('kpi-neu').innerText = data.kpis.neu;
+
+                const pTag = document.getElementById('prescriptiveTag');
+                const pText = document.getElementById('prescriptiveText');
+                if (data.insights && data.insights.length > 0) {
+                    const top = data.insights[0];
+                    pTag.innerText = top.level;
+                    pTag.className = 'alert-tag ' + (top.level.includes('Alert') || top.level.includes('Warning') ? 'alert-tag-critical' : 'alert-tag-stable');
+                    pText.innerHTML = `<strong>${esc(top.aspect)}:</strong> ${esc(top.recommendation)}`;
+                }
+
+                const pieImg = document.getElementById('pieChartImg');
+                if (data.pie_chart) {
+                    pieImg.src = 'data:image/png;base64,' + data.pie_chart;
+                    pieImg.style.display = 'block';
+                }
+
+                const barImg = document.getElementById('aspectBarImg');
+                if (data.aspect_chart) {
+                    barImg.src = 'data:image/png;base64,' + data.aspect_chart;
+                    barImg.style.display = 'block';
+                }
+
+                renderLogs(data.logs);
+                updatePaginationControls(data.pagination);
+                fetchKeywordCloud(currentProgram, currentSentiment, year, sem);
+            } catch (err) {
+                console.error("Failed to load analytics:", err);
+                showToast(err.userMessage || "Failed to load analytics data.", 'error');
+            }
+        }
+
+        async function fetchKeywordCloud(prog, sent, year, sem) {
+            try {
+                const res = await apiFetch(`/api/analytics/keywords?program=${encodeURIComponent(prog)}&sentiment=${encodeURIComponent(sent)}&year=${encodeURIComponent(year)}&semester=${encodeURIComponent(sem)}&source=${encodeURIComponent(currentSource)}`);
+                const data = await readJson(res, "Could not load data.");
+                const container = document.getElementById('keywordCloudContainer');
+                if (!container) return;
+
+                container.innerHTML = '';
+                if (!data.keywords || data.keywords.length === 0) {
+                    container.innerHTML = '<span style="color:var(--text-muted); font-size:0.8rem;">No recurring keywords extracted for this selection.</span>';
+                    return;
+                }
+
+                const maxCount = Math.max(...data.keywords.map(k => k.count), 1);
+
+                data.keywords.forEach(kw => {
+                    const chip = document.createElement('span');
+                    chip.className = 'keyword-chip';
+                    const fontScale = 0.76 + (kw.count / maxCount) * 0.38;
+                    chip.style.fontSize = `${fontScale}rem`;
+                    chip.innerHTML = `<span>${esc(kw.word)}</span> <span class="keyword-count-badge">${kw.count}</span>`;
+                    
+                    chip.onclick = () => {
+                        const searchBox = document.getElementById('searchInput');
+                        if (searchBox) {
+                            searchBox.value = kw.word;
+                            onSearchInput(kw.word);
+                            document.getElementById('logsPanelTarget').scrollIntoView({ behavior: 'smooth' });
+                            showToast(`Filtering records for keyword: "${esc(kw.word)}"`, "info");
+                        }
+                    };
+                    container.appendChild(chip);
+                });
+            } catch (err) {
+                console.error("Failed to load keyword cloud:", err);
+                showToast(err.userMessage || "Could not load the keyword cloud.", 'error');
+            }
+        }
+
+        function updatePaginationControls(p) {
+            if(!p) return;
+            currentPage = p.page;
+            const startRecord = p.total_items === 0 ? 0 : (p.page - 1) * p.per_page + 1;
+            const endRecord = Math.min(p.page * p.per_page, p.total_items);
+
+            document.getElementById('pageSummary').innerText = `Showing ${startRecord} to ${endRecord} of ${p.total_items} records`;
+            document.getElementById('pageIndicator').innerText = `Page ${p.page} of ${p.total_pages}`;
+
+            document.getElementById('btnPrevPage').disabled = (p.page <= 1);
+            document.getElementById('btnNextPage').disabled = (p.page >= p.total_pages);
+        }
+
+        function renderLogs(logs) {
+            const tbody = document.getElementById('logsTableBody');
+            tbody.innerHTML = '';
+            if (!logs || logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:30px;">No records match your selected filters or search keyword.</td></tr>';
+                return;
+            }
+            logs.forEach(item => {
+                let aspectsHTML = '';
+                item.aspects.forEach((a, aIdx) => {
+                    let activeChips = '';
+                    let neutralCount = 0;
+                    let neutralChips = '';
+
+                    if (a.token_scores && a.token_scores.length > 0) {
+                        a.token_scores.forEach(tok => {
+                            let signLabel = tok.final_score > 0 ? `+${tok.final_score}` : (tok.final_score < 0 ? `${tok.final_score}` : '0');
+
+                            if (tok.role.includes('Positive')) {
+                                activeChips += `<span class="token-chip token-pos" title="${esc(tok.role)}">${esc(tok.word)} (${signLabel})</span>`;
+                            } else if (tok.role.includes('Negative')) {
+                                activeChips += `<span class="token-chip token-neg" title="${esc(tok.role)}">${esc(tok.word)} (${signLabel})</span>`;
+                            } else if (tok.role.includes('Intensifier')) {
+                                activeChips += `<span class="token-chip token-amp" title="${esc(tok.role)}">${esc(tok.word)} (${signLabel})</span>`;
+                            } else if (tok.role.includes('Negator') || tok.role.includes('Sarcasm')) {
+                                activeChips += `<span class="token-chip token-inv" title="${esc(tok.role)}">${esc(tok.word)}</span>`;
+                            } else {
+                                neutralCount++;
+                                neutralChips += `<span class="token-chip token-neu">${esc(tok.word)}</span> `;
+                            }
+                        });
+                    }
+
+                    const neutralToggleId = `neu_${item.id}_${aIdx}`;
+
+                    aspectsHTML += `
+                        <div style="background:rgba(255,255,255,0.02); border-left:3px solid #3b82f6; padding:8px 12px; margin-bottom:8px; border-radius:6px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                                <strong style="font-size:0.78rem; color:var(--text-title);">${esc(a.aspect)}</strong>
+                                <span class="badge badge-${esc(a.polarity)}">${esc(a.polarity)}</span>
+                            </div>
+                            <div style="font-size:0.82rem; color:var(--text-body); margin-bottom:6px; font-style:italic;">"${esc(a.clause)}"</div>
+                            
+                            <div class="token-chip-container">
+                                ${activeChips ? activeChips : '<span style="font-size:0.7rem; color:var(--text-muted);">No sentiment tokens (RoBERTa inference baseline)</span>'}
+                            </div>
+
+                            ${neutralCount > 0 ? `
+                                <div style="margin-top:5px; font-size:0.68rem;">
+                                    <span onclick="event.stopPropagation(); const el = document.getElementById('${neutralToggleId}'); el.style.display = el.style.display === 'none' ? 'flex' : 'none';" 
+                                          style="color:var(--text-muted); cursor:pointer; text-decoration:underline;">
+                                        ${neutralCount} neutral tokens omitted (toggle)
+                                    </span>
+                                    <div id="${neutralToggleId}" class="token-chip-container" style="display:none; margin-top:4px;">
+                                        ${neutralChips}
+                                    </div>
+                                </div>
+                            ` : ''}
+
+                            <div style="font-size:0.68rem; color:var(--text-muted); margin-top:6px; border-top:1px solid rgba(255,255,255,0.05); padding-top:4px;">
+                                Net Impact: <strong style="color:var(--text-title);">${a.lexical_score !== undefined ? esc(a.lexical_score) : 0}</strong> | RoBERTa Conf: <strong>${esc(a.score)}</strong>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                let polarityHtml = `<span class="badge badge-${esc(item.sentiment)}">${esc(item.sentiment)}</span>`;
+                if (item.human_sentiment) {
+                    const aiOrig = item.ai_sentiment || item.sentiment;
+                    if (item.human_sentiment === aiOrig) {
+                        polarityHtml += `<br><span class="badge badge-Verified" style="margin-top: 6px;" title="Verified by ${esc(item.verified_by || 'MISD')}">✓ Verified</span>`;
+                    } else {
+                        polarityHtml += `<br><span class="badge badge-Overridden" style="margin-top: 6px;" title="Overridden by ${esc(item.verified_by || 'MISD')} (Original AI: ${esc(aiOrig)})">✏️ Overridden (AI: ${esc(aiOrig)})</span>`;
+                    }
+                }
+                if (item.has_sarcasm) {
+                    polarityHtml += `<br><span class="badge badge-Sarcasm" style="margin-top: 6px;" title="Sarcasm or linguistic irony detected in phrase">🃏 Sarcasm Detected</span>`;
+                }
+
+                const tr = document.createElement('tr');
+                tr.onclick = () => openAlgorithmInspector(item.id);
+                tr.innerHTML = `
+                    <td data-label="Program"><strong style="color:var(--text-title);">${esc(item.program)}</strong></td>
+                    <td data-label="Term" style="color:var(--text-muted); font-size:0.74rem;">
+                        ${esc(item.academic_year || '2026-2027')}<br>
+                        ${esc(item.semester || '1st Sem')}
+                    </td>
+                    <td data-label="Comment" style="color:var(--text-body); font-size:0.84rem;">"${esc(item.raw_text)}"</td>
+                    <td data-label="Polarity">${polarityHtml}</td>
+                    <td data-label="AI breakdown">${aspectsHTML}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function openAlgorithmInspector(logId) {
+            const log = feedbackLogsCache.find(l => l.id === logId);
+            if (!log) return;
+
+            document.getElementById('modalFeedbackRaw').innerText = `"${log.raw_text}"`;
+            document.getElementById('modalDeptBadge').innerText = log.program; 
+            
+            const sentBadge = document.getElementById('modalSentimentBadge');
+            sentBadge.innerText = log.sentiment;
+            sentBadge.className = `badge badge-${log.sentiment}`;
+
+            const existingSarcasm = document.getElementById('modalSarcasmBadge');
+            if (existingSarcasm) existingSarcasm.remove();
+
+            if (log.has_sarcasm) {
+                const sarcasmBadge = document.createElement('span');
+                sarcasmBadge.id = 'modalSarcasmBadge';
+                sarcasmBadge.className = 'badge badge-Sarcasm';
+                sarcasmBadge.innerText = '🃏 Sarcasm Detected';
+                document.getElementById('modalBadgesContainer').appendChild(sarcasmBadge);
+            }
+            
+            document.getElementById('modalConfidenceBadge').innerText = `Confidence: ${Math.round(log.confidence * 100)}%`;
+
+            const tokenContainer = document.getElementById('modalTokenWeightsContainer');
+            tokenContainer.innerHTML = '';
+            
+            const clauseContainer = document.getElementById('modalClauseBreakdown');
+            clauseContainer.innerHTML = '';
+
+            let allTokens = [];
+            if (log.aspects && log.aspects.length > 0) {
+                log.aspects.forEach(item => {
+                    if (item.token_scores) {
+                        item.token_scores.forEach(t => allTokens.push(t));
+                    }
+
+                    const clauseRow = document.createElement('div');
+                    clauseRow.style.cssText = "background:rgba(255,255,255,0.02); padding:8px 12px; border-radius:6px; border:1px solid var(--border-light); font-size:0.82rem;";
+                    clauseRow.innerHTML = `<strong>Aspect: [${esc(item.aspect)}]</strong><br>Clause: "${esc(item.clause)}" &bull; <span class="badge badge-${esc(item.polarity)}">${esc(item.polarity)}</span> <span style="color:var(--text-muted); font-size:0.75rem;">(${esc(item.explanation || '')})</span>`;
+                    clauseContainer.appendChild(clauseRow);
+                });
+            }
+
+            if (allTokens.length > 0) {
+                allTokens.forEach(t => {
+                    const chip = document.createElement('span');
+                    let cls = 'token-neu';
+                    if (t.final_score > 0) cls = 'token-pos';
+                    else if (t.final_score < 0) cls = 'token-neg';
+                    else if (t.role.includes('Intensifier')) cls = 'token-amp';
+                    else if (t.role.includes('Negator') || t.role.includes('Sarcasm')) cls = 'token-inv';
+
+                    chip.className = `token-chip ${cls}`;
+                    let signLabel = t.final_score > 0 ? `+${t.final_score}` : `${t.final_score}`;
+                    chip.innerHTML = `<span>${esc(t.word)}</span> <span style="font-size:0.64rem; opacity:0.85;">(${signLabel})</span>`;
+                    tokenContainer.appendChild(chip);
+                });
+            } else {
+                tokenContainer.innerHTML = '<span style="color:var(--text-muted); font-size:0.8rem;">No token weight breakdown recorded for this entry.</span>';
+            }
+
+            const actionBox = document.getElementById('modalPrescriptiveAction');
+            if (log.sentiment === 'Negative') {
+                actionBox.innerHTML = `<strong>Required Administrative Action:</strong> Elevated grievance detected in <strong>${esc(log.program)}</strong>. The Department Chair and General Services must review this feedback immediately, investigate classroom or laboratory conditions, and log an official resolution note in the portal.`;
+            } else if (log.sentiment === 'Positive') {
+                actionBox.innerHTML = `<strong>Institutional Recognition:</strong> Positive commendation recorded. Highlight this instructional delivery or facility standard during the next department meeting as a benchmark for institutional quality assurance.`;
+            } else {
+                actionBox.innerHTML = `<strong>Informational Baseline:</strong> Neutral observation recorded. Monitor ongoing student engagement trends across this course section.`;
+            }
+
+            currentInspectedLogId = log.id;
+            syncOverrideModalUI(log);
+            openModal('algorithmModal');
+        }
+
+        let currentInspectedLogId = null;
+
+        function syncOverrideModalUI(log) {
+            if (userRole !== 'MISD') return;
+            const statusText = document.getElementById('modalVerifyStatusText');
+            const resetBtn = document.getElementById('btnResetOverride');
+            const aiOrig = log.ai_sentiment || log.sentiment;
+
+            ['Positive', 'Neutral', 'Negative'].forEach(pol => {
+                const btn = document.getElementById('btnOv' + pol);
+                if (btn) {
+                    btn.classList.toggle('active', log.human_sentiment === pol);
+                }
+            });
+
+            if (log.human_sentiment) {
+                if (resetBtn) resetBtn.style.display = 'inline-flex';
+                if (statusText) {
+                    if (log.human_sentiment === aiOrig) {
+                        statusText.innerHTML = `<strong style="color:#34d399;">✓ Ground Truth Confirmed (${esc(log.human_sentiment)})</strong> — Matches original AI prediction (${esc(aiOrig)}). Verified by ${esc(log.verified_by || 'MISD')}.`;
+                    } else {
+                        statusText.innerHTML = `<strong style="color:#60a5fa;">✏️ Overridden to ${esc(log.human_sentiment)}</strong> — Original AI prediction was <strong>${esc(aiOrig)}</strong>. Verified by ${esc(log.verified_by || 'MISD')}.`;
+                    }
+                }
+            } else {
+                if (resetBtn) resetBtn.style.display = 'none';
+                if (statusText) {
+                    statusText.innerHTML = `Original AI Prediction: <strong>${esc(aiOrig)}</strong>. Click a button below to confirm or override this label for the Confusion Matrix.`;
+                }
+            }
+        }
+
+        async function submitSentimentOverride(newSentiment) {
+            if (userRole !== 'MISD' || !currentInspectedLogId) return;
+            showLoader(`Saving ground-truth label (${newSentiment})...`);
+            try {
+                const res = await apiFetch(`/api/feedback/${currentInspectedLogId}/override`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+                    body: JSON.stringify({ sentiment: newSentiment })
+                });
+                const data = await readJson(res, "Could not update sentiment label.");
+                const log = feedbackLogsCache.find(l => l.id === currentInspectedLogId);
+                if (log) {
+                    log.sentiment = data.sentiment;
+                    log.ai_sentiment = data.ai_sentiment;
+                    log.human_sentiment = data.human_sentiment;
+                    log.verified_by = data.verified_by;
+                    log.verified_at = data.verified_at;
+                    const sentBadge = document.getElementById('modalSentimentBadge');
+                    if (sentBadge) {
+                        sentBadge.innerText = log.sentiment;
+                        sentBadge.className = `badge badge-${log.sentiment}`;
+                    }
+                    syncOverrideModalUI(log);
+                }
+                showToast(`Ground-truth sentiment set to ${newSentiment}.`, "success");
+                fetchAnalytics();
+            } catch (e) {
+                showToast(e.userMessage || "Could not override sentiment.", "error");
+            } finally {
+                hideLoader();
+            }
+        }
+
+        async function resetSentimentOverride() {
+            if (userRole !== 'MISD' || !currentInspectedLogId) return;
+            showLoader("Resetting to original AI prediction...");
+            try {
+                const res = await apiFetch(`/api/feedback/${currentInspectedLogId}/override`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+                    body: JSON.stringify({ reset: true })
+                });
+                const data = await readJson(res, "Could not reset sentiment override.");
+                const log = feedbackLogsCache.find(l => l.id === currentInspectedLogId);
+                if (log) {
+                    log.sentiment = data.sentiment;
+                    log.ai_sentiment = data.ai_sentiment;
+                    log.human_sentiment = null;
+                    log.verified_by = null;
+                    log.verified_at = null;
+                    const sentBadge = document.getElementById('modalSentimentBadge');
+                    if (sentBadge) {
+                        sentBadge.innerText = log.sentiment;
+                        sentBadge.className = `badge badge-${log.sentiment}`;
+                    }
+                    syncOverrideModalUI(log);
+                }
+                showToast("Reset to original AI sentiment baseline.", "info");
+                fetchAnalytics();
+            } catch (e) {
+                showToast(e.userMessage || "Could not reset override.", "error");
+            } finally {
+                hideLoader();
+            }
+        }
+
+        let currentEvalMode = 'verified';
+
+        function openModelEvalModal() {
+            if (userRole !== 'MISD') return;
+            openModal('modelEvalModal');
+            loadModelEvaluation(currentEvalMode);
+        }
+
+        function closeModelEvalModal() {
+            closeModal('modelEvalModal');
+        }
+
+        function switchEvalMode(mode) {
+            currentEvalMode = mode;
+            const tabVer = document.getElementById('evalTabVerified');
+            const tabBench = document.getElementById('evalTabBenchmark');
+            if (tabVer) tabVer.classList.toggle('active', mode === 'verified');
+            if (tabBench) tabBench.classList.toggle('active', mode === 'benchmark');
+            loadModelEvaluation(mode);
+        }
+
+        async function loadModelEvaluation(mode) {
+            if (userRole !== 'MISD') return;
+            showLoader(mode === 'benchmark' ? "Running 30-item Taglish benchmark through XLM-RoBERTa + Lexicon..." : "Computing Confusion Matrix & F1 metrics...");
+            try {
+                const res = await apiFetch(`/api/model_evaluation?mode=${encodeURIComponent(mode)}`, {}, 60000);
+                const data = await readJson(res, "Could not load model evaluation metrics.");
+
+                const tabVer = document.getElementById('evalTabVerified');
+                if (tabVer && data.verified_db_count !== undefined) {
+                    tabVer.textContent = `🎯 Human-Verified Records (${data.verified_db_count})`;
+                }
+
+                document.getElementById('evalAccuracy').textContent = `${data.accuracy.toFixed(1)}%`;
+                document.getElementById('evalCorrectSub').textContent = `${data.correct} / ${data.total} correct predictions`;
+                document.getElementById('evalMacroF1').textContent = `${data.macro_f1.toFixed(1)}%`;
+                document.getElementById('evalWeightedF1Sub').textContent = `Weighted F1: ${data.weighted_f1.toFixed(1)}%`;
+                document.getElementById('evalMacroPrec').textContent = `${data.macro_precision.toFixed(1)}%`;
+                document.getElementById('evalMacroRec').textContent = `${data.macro_recall.toFixed(1)}%`;
+
+                const emptyBox = document.getElementById('evalEmptyNotice');
+                if (emptyBox) {
+                    emptyBox.style.display = (mode === 'verified' && data.total === 0) ? 'block' : 'none';
+                }
+
+                const classes = ['Positive', 'Neutral', 'Negative'];
+                const cmBody = document.getElementById('cmTableBody');
+                if (cmBody) {
+                    cmBody.innerHTML = classes.map(act => {
+                        const row = data.matrix[act] || { Positive: 0, Neutral: 0, Negative: 0 };
+                        const cells = classes.map(pred => {
+                            const val = row[pred] || 0;
+                            let cls = 'cm-cell';
+                            if (act === pred && val > 0) cls += ' cm-cell-tp';
+                            else if (act !== pred && val > 0) cls += ' cm-cell-err';
+                            return `<td class="${cls}">${val}</td>`;
+                        }).join('');
+                        return `<tr><td class="cm-row-label">Actual ${act}</td>${cells}</tr>`;
+                    }).join('');
+                }
+
+                const pcBody = document.getElementById('perClassTableBody');
+                if (pcBody) {
+                    pcBody.innerHTML = classes.map(c => {
+                        const st = (data.per_class && data.per_class[c]) || { precision: 0, recall: 0, f1: 0, tp: 0, fp: 0, fn: 0, support: 0 };
+                        return `
+                            <tr>
+                                <td style="padding:10px 12px;"><span class="badge badge-${c}">${c}</span></td>
+                                <td style="padding:10px 12px; font-weight:700; color:var(--text-title);">${st.precision.toFixed(1)}%</td>
+                                <td style="padding:10px 12px; font-weight:700; color:var(--text-title);">${st.recall.toFixed(1)}%</td>
+                                <td style="padding:10px 12px; font-weight:800; color:#60a5fa;">${st.f1.toFixed(1)}%</td>
+                                <td style="padding:10px 12px; font-size:0.75rem; color:var(--text-muted);">${st.tp} / ${st.fp} / ${st.fn}</td>
+                                <td style="padding:10px 12px; font-weight:700;">${st.support}</td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+
+                const disBox = document.getElementById('evalDisagreementsBox');
+                if (disBox) {
+                    if (data.total === 0) {
+                        disBox.innerHTML = '<span style="color:var(--text-muted);">No evaluated records to compare yet.</span>';
+                    } else if (!data.disagreements || data.disagreements.length === 0) {
+                        disBox.innerHTML = '<span style="color:#34d399; font-weight:700;">✅ Zero misclassifications! Every evaluated record matches its ground-truth polarity (100% agreement).</span>';
+                    } else {
+                        disBox.innerHTML = data.disagreements.map(d => `
+                            <div style="padding:8px 10px; border-bottom:1px solid var(--border-light); display:flex; justify-content:space-between; gap:10px; align-items:flex-start;">
+                                <div style="flex:1;">
+                                    <strong style="color:var(--text-title);">[${esc(d.program)}]</strong> "${esc(d.text)}"
+                                </div>
+                                <div style="white-space:nowrap; font-size:0.74rem;">
+                                    Actual: <span class="badge badge-${esc(d.actual)}">${esc(d.actual)}</span>
+                                    &rarr; AI: <span class="badge badge-${esc(d.predicted)}">${esc(d.predicted)}</span>
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+                }
+            } catch (e) {
+                showToast(e.userMessage || "Could not load evaluation metrics.", "error");
+            } finally {
+                hideLoader();
+            }
+        }
+
+        async function seedBenchmarkSuite() {
+            if (userRole !== 'MISD') return;
+            showLoader("Evaluating & seeding 30 Taglish gold-standard test cases...", 60000);
+            try {
+                const res = await apiFetch('/api/model_evaluation/seed_benchmark', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN }
+                }, 60000);
+                const data = await readJson(res, "Could not seed benchmark dataset.");
+                showToast(`Seeded ${data.added} new verified Taglish benchmark record(s) into AI Testing Logs.`, "success");
+                switchEvalMode('verified');
+                fetchAnalytics();
+            } catch (e) {
+                showToast(e.userMessage || "Failed to seed benchmark suite.", "error");
+            } finally {
+                hideLoader();
+            }
+        }
+
+        function closeAlgorithmModal() {
+            closeModal('algorithmModal');
+        }
+
+        async function submitSingleFeedback() {
+            if (userRole !== 'MISD') return;
+            const commentInput = document.getElementById('singleComment');
+            const progInput = document.getElementById('singleProgram');
+            const yearInput = document.getElementById('singleYear');
+            const semInput = document.getElementById('singleSem');
+            const expInput = document.getElementById('singleExpectedSentiment');
+            if (!commentInput) return;
+
+            const comment = commentInput.value.trim();
+            const program = progInput ? progInput.value : "BSCS";
+            const academic_year = yearInput ? yearInput.value : "2026-2027";
+            const semester = semInput ? semInput.value : "1st Semester";
+            const expected_sentiment = expInput ? expInput.value : "";
+
+            if (!comment) return showToast("Please input a narrative first.", "warning");
+
+            showLoader("Testing AI Analysis...");
+
+            try {
+                const res = await apiFetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+                    body: JSON.stringify({ comment, program, academic_year, semester, expected_sentiment })
+                });
+                if (res.ok) {
+                    commentInput.value = '';
+                    showToast("Diagnostic feedback stored.", "success");
+                    
+                    if (currentSource !== 'Testing') {
+                        const testingTab = Array.from(document.querySelectorAll('.source-tab')).find(b => b.innerText.includes('Testing Logs'));
+                        if (testingTab) switchSource('Testing', testingTab);
+                    } else {
+                        fetchAnalytics();
+                    }
+                } else {
+                    const errorData = await res.json();
+                    showToast(errorData.error || "Analysis failed.", 'error');
+                }
+            } catch (e) {
+                showToast(e.userMessage || "Server communication error.", 'error');
+            } finally {
+                hideLoader();
+            }
+        }
+
+        // ==========================================================
+        // CSV IMPORT: check the file first, import in small chunks, undo if needed
+        // ==========================================================
+        let csvPreview = null, csvBatchId = null, csvBusy = false, csvMapTimer = null;
+
+        function openCsvModal() {
+            if (userRole !== 'MISD') return;
+            const modal = document.getElementById('csvModal');
+            if (modal) { resetCsvPreview(); openModal('csvModal'); loadCsvHistory(); }
+        }
+        function closeCsvModal() { if (csvBusy) return showToast("An import is running. Please wait for it to finish.", "warning"); closeModal('csvModal'); }
+
+        function resetCsvPreview() {
+            csvPreview = null; csvBatchId = null;
+            ['csvPreviewBox', 'csvProgressBox', 'csvDoneBox'].forEach(id => { const el = document.getElementById(id); if (el) { el.style.display = 'none'; el.innerHTML = el.id === 'csvPreviewBox' || el.id === 'csvDoneBox' ? '' : el.innerHTML; } });
+            const btn = document.getElementById('csvPrimaryBtn'); if (btn) { btn.textContent = 'Check file'; btn.disabled = false; }
+        }
+
+        function _csvForm(extra) {
+            const fd = new FormData();
+            fd.append('file', document.getElementById('csvFileInput').files[0]);
+            fd.append('program', document.getElementById('csvProgFallback').value);
+            fd.append('academic_year', document.getElementById('csvYear').value);
+            fd.append('semester', document.getElementById('csvSem').value);
+            if (csvPreview) { fd.append('mapping', JSON.stringify(csvPreview.mapping)); fd.append('file_sha256', csvPreview.file_sha256); }
+            Object.keys(extra || {}).forEach(k => fd.append(k, extra[k]));
+            return fd;
+        }
+
+        function csvPrimaryAction() {
+            if (csvBusy) return;
+            if (csvPreview && csvPreview.importable > 0 && document.getElementById('csvPrimaryBtn').dataset.mode === 'import') return runCsvImport();
+            return previewCsv();
+        }
+
+        async function previewCsv(keepMapping) {
+            if (userRole !== 'MISD') return;
+            const input = document.getElementById('csvFileInput');
+            if (!input || !input.files.length) return showToast("Please choose a CSV file.", "warning");
+            const btn = document.getElementById('csvPrimaryBtn');
+            csvBusy = true; btn.disabled = true; btn.textContent = 'Checking...';
+            try {
+                const prevMapping = keepMapping && csvPreview ? csvPreview.mapping : null;
+                const fd = new FormData();
+                fd.append('file', input.files[0]);
+                fd.append('program', document.getElementById('csvProgFallback').value);
+                fd.append('academic_year', document.getElementById('csvYear').value);
+                fd.append('semester', document.getElementById('csvSem').value);
+                if (prevMapping) fd.append('mapping', JSON.stringify(prevMapping));
+                const res = await apiFetch('/api/import/preview', { method: 'POST', headers: { 'X-CSRFToken': CSRF_TOKEN }, body: fd }, 60000);
+                const data = await res.json();
+                if (!res.ok) throw Object.assign(new Error(data.error), { userMessage: data.error || "Could not check this file." });
+                csvPreview = data;
+                renderCsvPreview();
+            } catch (e) {
+                showToast(e.userMessage || e.message || "Could not check this file.", 'error');
+            } finally {
+                csvBusy = false; btn.disabled = false;
+                if (csvPreview) { btn.dataset.mode = csvPreview.importable > 0 ? 'import' : 'check'; btn.textContent = csvPreview.importable > 0 ? `Import ${csvPreview.importable} row${csvPreview.importable === 1 ? '' : 's'}` : 'Check file'; if (csvPreview.importable === 0) btn.disabled = true; }
+                else { btn.textContent = 'Check file'; btn.dataset.mode = 'check'; }
+            }
+        }
+
+        function renderCsvPreview() {
+            const p = csvPreview, box = document.getElementById('csvPreviewBox');
+            const opt = (sel, allowNone) => (allowNone ? `<option value="">(use the choices above)</option>` : '') + p.columns.map(c => `<option value="${esc(c)}" ${c === sel ? 'selected' : ''}>${esc(c)}</option>`).join('');
+            const stat = (n, label, cls) => `<div class="csv-stat ${cls || ''}"><b>${n}</b><span>${label}</span></div>`;
+            const warns = [];
+            if (p.ambiguous) warns.push("More than one column looks like the comment text. Please confirm the right one below.");
+            if (p.over_limit > 0) warns.push(`Only the first ${p.max_rows.toLocaleString()} rows can be imported at once. ${p.over_limit.toLocaleString()} more row(s) in this file are left out. Split the file to import them.`);
+            if (p.duplicates_existing + p.duplicates_in_file > 0) warns.push(`${p.duplicates_existing + p.duplicates_in_file} row(s) are duplicates (already imported earlier, or repeated in this file) and will be skipped.`);
+            if (p.profanity_rows > 0) warns.push(`${p.profanity_rows} comment(s) contain profanity. The words are hidden with asterisks when saved, and the AI still scores the original.`);
+            if (p.pii_rows > 0) warns.push(`${p.pii_rows} comment(s) contain phone numbers, emails, student numbers or self-introductions. These are masked automatically before saving.`);
+            if (p.truncated_text > 0) warns.push(`${p.truncated_text} comment(s) are longer than 5,000 characters and will be shortened.`);
+            if (p.defaulted_fields > 0) warns.push(`${p.defaulted_fields} cell(s) in the program, year or semester columns were blank or unreadable, so the choices above are used for them.`);
+            if (!/^UTF-8$/.test(p.encoding)) warns.push(`File encoding detected as ${esc(p.encoding)}.`);
+            box.innerHTML = `
+                <div class="csv-stats">
+                    ${stat(p.total_rows.toLocaleString(), 'rows in file')}
+                    ${stat(p.importable.toLocaleString(), 'will be imported', 'ok')}
+                    ${stat((p.duplicates_existing + p.duplicates_in_file).toLocaleString(), 'duplicates', p.duplicates_existing + p.duplicates_in_file ? 'warn' : '')}
+                    ${stat(p.skipped_total.toLocaleString(), 'skipped rows', p.skipped_total ? 'warn' : '')}
+                </div>
+                ${warns.map(w => `<div class="csv-warn">⚠️ ${w}</div>`).join('')}
+                <div class="csv-map">
+                    <div class="csv-map-title">Which column is which?</div>
+                    <label>Comment text <select id="mapText" onchange="onCsvMapChange()">${opt(p.mapping.text, false)}</select></label>
+                    <label>Program <select id="mapProgram" onchange="onCsvMapChange()"><option value="">(use the choice above)</option>${p.columns.map(c => `<option value="${esc(c)}" ${c === p.mapping.program ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select></label>
+                    <label>Academic year <select id="mapYear" onchange="onCsvMapChange()"><option value="">(use the choice above)</option>${p.columns.map(c => `<option value="${esc(c)}" ${c === p.mapping.year ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select></label>
+                    <label>Semester <select id="mapSem" onchange="onCsvMapChange()"><option value="">(use the choice above)</option>${p.columns.map(c => `<option value="${esc(c)}" ${c === p.mapping.semester ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select></label>
+                </div>
+                ${p.samples.length ? `<div class="csv-map-title" style="margin-top:12px;">First rows that will be imported</div>
+                <div class="csv-samples">${p.samples.map(s => `<div><span class="csv-row-no">row ${s.row}</span> <b>${esc(s.program)}</b> · ${esc(s.academic_year)} · ${esc(s.semester)}<div>${esc(s.text)}</div></div>`).join('')}</div>` : ''}
+                ${p.skipped.length ? `<details class="csv-skipped"><summary>Why ${p.skipped_total} row(s) are skipped</summary>${p.skipped.map(s => `<div>Row ${s.row}: ${esc(s.reason)}</div>`).join('')}${p.skipped_total > p.skipped.length ? `<div>...and ${p.skipped_total - p.skipped.length} more.</div>` : ''}</details>` : ''}
+            `;
+            box.style.display = 'block';
+            document.getElementById('csvDoneBox').style.display = 'none';
+        }
+
+        function onCsvMapChange() {   // re-check the file with the column choices the person made
+            if (!csvPreview) return;
+            csvPreview.mapping = { text: document.getElementById('mapText').value || null, program: document.getElementById('mapProgram').value || null, year: document.getElementById('mapYear').value || null, semester: document.getElementById('mapSem').value || null };
+            clearTimeout(csvMapTimer);
+            csvMapTimer = setTimeout(() => previewCsv(true), 350);
+        }
+
+        async function runCsvImport() {
+            if (!csvPreview || csvBusy) return;
+            csvBusy = true;
+            const btn = document.getElementById('csvPrimaryBtn'); btn.disabled = true;
+            document.getElementById('csvPreviewBox').style.display = 'none';
+            const prog = document.getElementById('csvProgressBox'); prog.style.display = 'block';
+            const fill = document.getElementById('csvProgressFill'), label = document.getElementById('csvProgressLabel');
+            let imported = 0, total = csvPreview.importable, done = false;
+            try {
+                while (!done) {
+                    label.textContent = `Analyzing and saving... ${imported.toLocaleString()} of ${total.toLocaleString()}`;
+                    const res = await apiFetch('/api/import/commit', { method: 'POST', headers: { 'X-CSRFToken': CSRF_TOKEN }, body: _csvForm(csvBatchId ? { batch_id: csvBatchId } : {}) }, 150000);
+                    const data = await res.json();
+                    if (!res.ok) throw Object.assign(new Error(data.error), { userMessage: data.error || "The import was interrupted." });
+                    csvBatchId = data.batch_id; imported = data.imported; total = data.total; done = data.done;
+                    fill.style.width = (total ? Math.round(imported / total * 100) : 100) + '%';
+                }
+                prog.style.display = 'none';
+                const d = document.getElementById('csvDoneBox');
+                d.innerHTML = `<div class="csv-done-title">✅ Imported ${imported.toLocaleString()} row${imported === 1 ? '' : 's'}</div>
+                    <div class="csv-done-sub">Made a mistake? You can undo this whole import.</div>
+                    <button type="button" class="btn-nav csv-undo" onclick="undoCsvImport('${csvBatchId}', this)">↩ Undo this import</button>`;
+                d.style.display = 'block';
+                btn.textContent = 'Check another file'; btn.dataset.mode = 'check'; btn.disabled = false;
+                csvPreview = null;
+                document.getElementById('csvFileInput').value = '';
+                loadCsvHistory();
+                if (currentSource !== 'CSV') {
+                    const csvTab = Array.from(document.querySelectorAll('.source-tab')).find(b => b.innerText.includes('Imported CSVs'));
+                    if (csvTab) switchSource('CSV', csvTab);
+                } else { fetchAnalytics(); }
+            } catch (e) {
+                prog.style.display = 'none';
+                document.getElementById('csvPreviewBox').style.display = 'block';
+                btn.disabled = false; btn.textContent = csvBatchId ? 'Resume import' : `Import ${csvPreview.importable} rows`; btn.dataset.mode = 'import';
+                showToast(`${e.userMessage || e.message || "The import was interrupted."} ${csvBatchId ? "Rows saved so far are kept; press Resume import to continue." : ""}`.trim(), 'error');
+            } finally { csvBusy = false; }
+        }
+
+        async function loadCsvHistory() {
+            const list = document.getElementById('csvHistoryList'); if (!list) return;
+            try {
+                const res = await apiFetch('/api/import/history');
+                const rows = await res.json();
+                if (!res.ok) throw new Error(rows.error);
+                list.innerHTML = rows.length ? rows.map(b => `
+                    <div class="csv-history-row">
+                        <div class="csv-history-main"><b>${esc(b.filename)}</b><span>${esc(b.created_at)} · ${esc(b.uploaded_by)}</span></div>
+                        <div class="csv-history-meta">${b.imported.toLocaleString()} rows ${b.skipped + b.duplicates ? `· ${(b.skipped + b.duplicates).toLocaleString()} skipped` : ''}</div>
+                        <span class="csv-chip csv-chip-${esc(b.status)}">${b.status === 'rolled_back' ? 'Undone' : b.status === 'running' ? 'Unfinished' : 'Done'}</span>
+                        ${b.can_undo ? `<button type="button" class="btn-nav csv-undo" onclick="undoCsvImport('${esc(b.id)}', this)">Undo</button>` : ''}
+                    </div>`).join('') : '<div class="csv-history-empty">No imports yet.</div>';
+            } catch (e) { list.innerHTML = '<div class="csv-history-empty">Could not load the import history.</div>'; }
+        }
+
+        async function undoCsvImport(batchId, btn) {
+            if (btn.dataset.armed !== '1') {      // two-step confirm without a browser popup
+                btn.dataset.armed = '1'; const old = btn.textContent; btn.textContent = 'Click again to remove these rows';
+                setTimeout(() => { btn.dataset.armed = ''; btn.textContent = old; }, 4000);
+                return;
+            }
+            btn.disabled = true;
+            try {
+                const res = await apiFetch(`/api/import/${batchId}/rollback`, { method: 'POST', headers: { 'X-CSRFToken': CSRF_TOKEN } });
+                const data = await res.json();
+                if (!res.ok) throw Object.assign(new Error(data.error), { userMessage: data.error });
+                showToast(`Import undone. ${data.removed} row(s) removed.`, 'success');
+                document.getElementById('csvDoneBox').style.display = 'none';
+                loadCsvHistory(); fetchAnalytics();
+            } catch (e) { btn.disabled = false; showToast(e.userMessage || "Could not undo the import.", 'error'); }
+        }
+
+        function openLexiconModal() {
+            if (userRole !== 'MISD') return;
+            openModal('lexiconModal');
+            fetchLexicon();
+        }
+
+        function closeLexiconModal() {
+            closeModal('lexiconModal');
+        }
+
+        async function fetchLexicon() {
+            if (userRole !== 'MISD') return;
+            try {
+                const res = await apiFetch('/api/lexicon');
+                const data = await readJson(res, "Could not load data.");
+                const tbody = document.getElementById('lexiconTableBody');
+                if (!tbody) return;
+                tbody.innerHTML = '';
+                data.forEach(t => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td style="color:var(--text-title);">${esc(t.word)}</td>
+                        <td><span class="badge badge-Neutral">${esc(t.category)}</span></td>
+                        <td><button onclick="deleteLexiconTerm(${t.id})" style="background:transparent; border:none; color:var(--txt-red); cursor:pointer; font-weight:600;">Delete</button></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                console.error("Failed to fetch lexicon:", err);
+                showToast(err.userMessage || "Could not load the slang dictionary.", 'error');
+            }
+        }
+
+        async function addLexiconTerm() {
+            if (userRole !== 'MISD') return;
+            const wordInput = document.getElementById('newWord');
+            const catInput = document.getElementById('newCategory');
+            if (!wordInput || !catInput) return;
+
+            const word = wordInput.value.trim();
+            const category = catInput.value;
+            if (!word) return;
+
+            showLoader("Updating Taglish slang dictionary...");
+
+            try {
+                const res = await apiFetch('/api/lexicon', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+                    body: JSON.stringify({ word, category })
+                });
+                if (res.ok) {
+                    wordInput.value = '';
+                    fetchLexicon();
+                    showToast("Slang term registered in database.", "success");
+                } else {
+                    const data = await res.json();
+                    showToast(data.error || "Failed to add term.", 'error');
+                }
+            } catch (err) {
+                showToast(err.userMessage || "Server communication error.", 'error');
+            } finally {
+                hideLoader();
+            }
+        }
+
+        async function deleteLexiconTerm(id) {
+            if (userRole !== 'MISD') return;
+            showLoader("Removing lexicon term...");
+            try {
+                const res = await apiFetch('/api/lexicon', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+                    body: JSON.stringify({ id })
+                });
+                if (res.ok) {
+                    fetchLexicon();
+                    showToast("Term removed.", "success");
+                } else {
+                    showToast("Failed to delete term.", 'error');
+                }
+            } catch (err) {
+                showToast(err.userMessage || "Server error.", 'error');
+            } finally {
+                hideLoader();
+            }
+        }
+
+        function exportCurrentCsv() {
+            const yearElem = document.getElementById('filterYear');
+            const semElem = document.getElementById('filterSem');
+            const year = yearElem ? yearElem.value : 'ALL';
+            const sem = semElem ? semElem.value : 'ALL';
+            downloadFile(`/api/export_csv?program=${encodeURIComponent(currentProgram)}&sentiment=${encodeURIComponent(currentSentiment)}&year=${encodeURIComponent(year)}&semester=${encodeURIComponent(sem)}&source=${encodeURIComponent(currentSource)}`, 'dci_sentiment_export.csv');
+        }
+
+        // ==========================================================
+        // GUIDED TOUR (first-time question + replay button)
+        // ==========================================================
+        const TOUR_ALL_STEPS = [
+            { title: "Welcome to the Oversight Dashboard", body: "This page turns anonymous student feedback into clear summaries and action items. In about a minute, you'll see how to <strong>filter feedback</strong>, read the <strong>early warning alerts</strong>, check the <strong>charts</strong>, and <strong>review individual comments</strong>." },
+            { target: ".source-filter-bar", title: "1. Choose Where the Data Comes From", body: "Switch between <strong>📱 Portal Submissions</strong> (posts and surveys from students), <strong>📁 Imported CSVs</strong> (spreadsheet files you uploaded), and <strong>🧪 AI Testing Logs</strong> (sample sentences you tested yourself).", roles: ['MISD'] },
+            { target: "#dataSortBarTarget", title: "2. Filter by Program & Feeling", body: "Click <strong>BSCS</strong> or <strong>BSIT</strong> to focus on one program, or click <strong>Positive</strong>, <strong>Negative</strong>, or <strong>Neutral</strong> to filter all numbers, charts, and comments on the page.", roles: ['MISD'] },
+            { target: "#termFilterTarget", title: "3. School Year & Semester", body: "Use these menus to view a specific school year and semester. Click <strong>📌 Set Active Term</strong> to set which semester new student posts are saved under, or click <strong>+ Add Year</strong> to add a new school year.", roles: ['MISD'] },
+            { target: "#termFilterTarget", title: "1. School Year & Semester", body: "Use these menus to view feedback from a specific school year and semester. The <strong>📌 Active</strong> badge shows the current term.", notRoles: ['MISD'] },
+            { target: "#prescriptiveBoxTarget", title: "Early Warning Alerts", body: "Watches student concerns automatically. Whenever <strong>40% or more</strong> of the feedback in an area (Teaching, Approachability, or Facilities) is negative, a suggested action appears here." },
+            { target: "#kpiRowTarget", title: "Quick Summary Numbers", body: "Shows the total number of comments along with how many are Positive, Negative, or Neutral. (If fewer than 5 students match a filter, details stay hidden so individual students cannot be identified.)" },
+            { target: "#narrativePanelTarget", title: "Test the AI Yourself", body: "Type any sample sentence in English, Tagalog, or Taglish (including slang or <em>'eme/charot'</em> jokes) to see how the AI scores it. You can also pick an <strong>Expected</strong> result if you want to check whether the AI got it right.", roles: ['MISD'] },
+            { target: "#scorecardPanelTarget", title: "Visual Charts", body: "The ring chart shows the overall mix of positive, neutral, and negative feedback. The bar chart breaks it down by topic: <strong>Pedagogy</strong> (teaching), <strong>Demeanor</strong> (approachability), and <strong>Facilities</strong> (rooms, Wi-Fi, labs)." },
+            { target: "#keywordCloudTarget", title: "Most Mentioned Words", body: "Shows the words students use the most. <strong>Tap any word</strong> to filter the table below to comments that mention it." },
+            { target: "#logsPanelTarget", title: "Read Comments & Verify the AI", body: "Search for any word or program. <strong>Tap any row</strong> to see how each word was scored, and click <strong>Confirm / Set Positive, Neutral, or Negative</strong> if you want to approve or correct the AI's rating.", roles: ['MISD'] },
+            { target: "#logsPanelTarget", title: "Read Comments & See Why", body: "Search for any word or program, and <strong>tap any row</strong> to see how each word and phrase affected the AI's rating.", notRoles: ['MISD'] },
+            { target: "#evalNavBtn", title: "Check AI Accuracy", body: "Tap <strong>📊 AI Evaluation (F1)</strong> to see a summary scorecard of how often the AI agrees with your verified ratings, or test it against <strong>30 built-in Taglish sample sentences</strong> in one click.", roles: ['MISD'] },
+            { target: "#navActionsTarget", title: "Upload, Download & Slang Dictionary", body: "<strong>Upload CSV</strong> imports survey spreadsheets (with an Undo button if needed). <strong>Export CSV</strong> downloads what you're viewing. <strong>Slang Manager</strong> lets you teach the AI new campus slang words.", roles: ['MISD'] },
+            { target: "#navActionsTarget", title: "Download Report", body: "Click <strong>Export CSV</strong> to download the feedback records you are currently viewing as a spreadsheet.", notRoles: ['MISD'] },
+            { target: "#themeToggle", title: "Light or Dark Mode", body: "Switch between dark and light mode anytime to match what is easiest on your eyes." },
+            { title: "You're All Set!", body: "You stay signed in until you press <strong>Sign Out</strong>. You can replay this guide anytime on a computer or phone using the <strong>❓ Tour</strong> button at the top." }
+        ];
+        CCCTour.configure({
+            steps: TOUR_ALL_STEPS.filter(st => (!st.roles || st.roles.includes(userRole)) && !(st.notRoles && st.notRoles.includes(userRole))),
+            seen: {{ tour_seen | tojson }},
+            appName: 'the oversight dashboard',
+            userName: {{ username | tojson | safe }},
+            csrf: (document.querySelector('meta[name="csrf-token"]') || {}).content || '',
+            seenEndpoint: '/api/tutorial/seen'
+        });
+        document.addEventListener('DOMContentLoaded', () => {
+            const splash = document.getElementById('splashCurtain');
+            const splashUp = splash && splash.style.display !== 'none' && !splash.classList.contains('dissolve');
+            setTimeout(() => CCCTour.promptIfFirstTime(), splashUp ? 3900 : 900);   // ask only once the intro screen is gone
+        });
+
+        fetchAnalytics();
+    </script>
+</body>
+</html>

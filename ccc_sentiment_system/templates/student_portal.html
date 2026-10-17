@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- THEME BOOTSTRAP: runs before first paint so the saved theme is applied with no flash -->
+    <script>
+        (function () {
+            var t = 'dark';
+            try { var s = localStorage.getItem('ccc_theme'); if (s === 'light' || s === 'dark') t = s; } catch (e) {}
+            document.documentElement.setAttribute('data-theme', t);
+        })();
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>Student Community Portal — City College of Calamba</title>
+    <!-- CSRF Token injected for security -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    
+    <!-- UI/UX Polish: Inter Font for modern SaaS feel -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- EXTERNAL CSS -->
+    <link rel="stylesheet" href="{{ asset_url('student_portal.css') }}">
+    <link rel="stylesheet" href="{{ asset_url('tour.css') }}">
+</head>
+<body>
+    <!-- CINEMATIC UNVEILING INTRO / WELCOME SPLASH -->
+    <div id="splashCurtain" class="splash-curtain" role="status" aria-live="polite">
+        <div class="splash-aura"></div>
+        <div class="splash-emblem-wrap">
+            <img src="{{ url_for('static', filename='ccclogo.png') }}" alt="City College of Calamba Emblem" class="splash-emblem">
+        </div>
+        <div class="splash-content">
+            <div class="splash-tag">Student Community Portal</div>
+            <h1 class="splash-title">City College of Calamba</h1>
+            <p class="splash-subtitle">Bilingual (Taglish) Sentiment Analysis & Student Feedback Portal</p>
+            <div class="splash-loader-bar">
+                <div class="splash-loader-fill"></div>
+            </div>
+            <div class="splash-skip-hint">Loading your portal&hellip;</div>
+        </div>
+    </div>
+
+    <div id="toast" role="status" aria-live="polite"></div>
+    <div id="sidebarDrawerBackdrop" class="sidebar-drawer-backdrop" onclick="closeMobileDrawer()"></div>
+
+    <div id="loader" class="loader-overlay">
+        <div class="spinner"></div>
+        <p id="loaderText" style="margin-top: 16px; color: var(--text-heading); font-weight: 600; font-size: 0.9rem;">Processing Feedback...</p>
+    </div>
+
+    <!-- Sign Out Modal -->
+    <!-- DELETE SURVEY MODAL -->
+    <div id="deleteSurveyModal" class="modal-overlay">
+        <div class="modal-card" style="max-width:460px;">
+            <h3 style="color:var(--text-heading); margin-bottom:6px; font-size:1.15rem;">Delete this survey?</h3>
+            <p id="deleteSurveyName" class="sv-del-name"></p>
+            <p style="color:var(--text-muted); font-size:0.84rem; line-height:1.55; margin:10px 0;">It disappears for everyone right away and can no longer be answered. The <strong id="deleteSurveyCount">0</strong> response(s) already collected stay in the sentiment analytics unless you choose to erase them below.</p>
+            <label class="sv-del-check"><input type="checkbox" id="deleteSurveyPurge"> <span>Also permanently erase every response collected through this survey. This cannot be undone.</span></label>
+            <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:16px;">
+                <button type="button" class="btn-nav" onclick="closeDeleteSurvey()">Cancel</button>
+                <button type="button" class="btn-action sv-del-btn" onclick="confirmDeleteSurvey()">Delete Survey</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="logoutModal" class="modal-overlay">
+        <div class="modal-sheet">
+            <h4 style="color: var(--text-heading); font-size: 1.15rem; margin-bottom: 8px;">End Active Session?</h4>
+            <p style="color: var(--text-muted); font-size: 0.86rem; margin-bottom: 22px; line-height: 1.5;">Are you sure you want to sign out of the Student Community Portal?</p>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-nav" style="flex: 1; justify-content: center;" onclick="closeLogoutModal()">Cancel</button>
+                <button class="btn-action" style="flex: 1; justify-content: center; background: #f43f5e;" onclick="confirmLogout()">Confirm Sign Out</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Student sign-out farewell screen (shown by confirmLogout) -->
+    <div id="farewellScreen" class="farewell-screen" role="alertdialog" aria-live="polite" aria-labelledby="farewellTitle">
+        <div class="farewell-aura"></div>
+        <img src="{{ url_for('static', filename='ccclogo.png') }}" alt="" class="farewell-emblem">
+        <div class="farewell-body">
+            <div class="farewell-tag">Signing out</div>
+            <h2 id="farewellTitle" class="farewell-title">Salamat sa pakikibahagi, <span id="farewellName">{{ username }}</span>!</h2>
+            <p class="farewell-sub">Salamat sa pagbabahagi ng boses mo. Ang bawat opinyon mo ay nakakatulong para mapabuti ang City College of Calamba. Your feedback makes a real difference.</p>
+            <div class="farewell-bar"></div>
+            <div id="farewellStatus" class="farewell-status">Isinasara ang iyong session nang ligtas...</div>
+            <button type="button" id="farewellRetry" class="btn-action farewell-retry" onclick="retryLogout()">Taking long? Try again</button>
+        </div>
+    </div>
+
+    <!-- Hidden form for secure CSRF POST logout -->
+    <form id="logoutForm" method="POST" action="{{ url_for('logout') }}" style="display: none;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    </form>
+
+    <!-- Edit Post Modal -->
+    <div id="editPostModal" class="modal-overlay">
+        <div class="modal-card">
+            <h3 style="color: var(--text-heading); margin-bottom: 6px;">✏️ Edit Post / Announcement</h3>
+            <p style="color: var(--text-muted); font-size: 0.82rem; margin-bottom: 14px;">Modify your announcement text, update media image, or provide reference links.</p>
+
+            <input type="hidden" id="editPostId">
+            <input type="hidden" id="editPostIsAnnouncement">
+            
+            <label style="font-size:0.74rem; color:var(--text-muted); display:block; margin-bottom:4px;">Your Comment</label>
+            <textarea id="editPostContent" class="textarea-input" style="height: 100px;" placeholder="Edit post content..."></textarea>
+
+            <label style="font-size:0.74rem; color:var(--text-muted); display:block; margin-bottom:4px;">Focus Category</label>
+            <select id="editPostCategory" class="select-input">
+                <option value="Campus Facilities & Infrastructure">Facilities & Laboratory</option>
+                <option value="Campus Events & Traditions">Sportsfest / Alay Lakad / Events</option>
+                <option value="Instructional Delivery & Pedagogy">Instructional Delivery & Pacing</option>
+                <option value="Faculty Demeanor & Approachability">Faculty Approachability & Welfare</option>
+                <option value="General Academic Feedback">General Campus Life</option>
+            </select>
+
+            <!-- Upgraded Announcement Expiration Picker for EDIT -->
+            <div id="editExpirationContainer" style="display:none; margin-bottom: 14px; background: rgba(245, 158, 11, 0.08); border: 1px dashed rgba(245, 158, 11, 0.35); padding: 10px; border-radius: 8px;">
+                <label style="font-size:0.74rem; color:var(--txt-gold); font-weight:700; display:block; margin-bottom:4px;">Announcement Expiration Date (optional)</label>
+                <p style="font-size:0.7rem; color:var(--text-muted); margin-bottom:8px;">If set, this announcement will automatically disappear from the feed after this date.</p>
+                <div class="deadline-picker-box">
+                    <button type="button" class="btn-browse-img" onclick="triggerEditCalendarPicker()" title="Select date from calendar">
+                        📅 Pick Date
+                    </button>
+                    <input type="date" id="editPickerDatePart" class="deadline-date-input" onchange="handleEditDateSelected(this.value)">
+                    
+                    <button type="button" class="btn-browse-img" onclick="triggerEditClockPicker()" title="Select cutoff time" style="margin-left:auto; background:rgba(37,99,235,0.15); border-color:rgba(59,130,246,0.35); color:var(--txt-blue);">
+                        ⏰ Pick Time
+                    </button>
+                    <input type="time" id="editPickerTimePart" class="deadline-date-input" value="23:59" onchange="syncEditDeadlineValue()">
+                </div>
+                <input type="hidden" id="editExpirationDate">
+                
+                <div id="editDeadlineFormattedBadge" style="display:none; align-items:center; gap:6px; margin-top:5px; font-size:0.74rem; color:var(--txt-gold);">
+                    <span>🗓️ <strong id="editDeadlineFormattedText">Expiration Set</strong></span>
+                    <button type="button" onclick="clearEditDeadlineSelection()" style="background:none; border:none; color:var(--txt-red); cursor:pointer; font-weight:bold; font-size:0.72rem;">✕ Clear</button>
+                </div>
+            </div>
+
+            <label style="font-size:0.74rem; color:var(--text-muted); display:block; margin-bottom:4px;">Attach Image (Browse, Drag & Drop, or URL)</label>
+            <div class="image-drop-container" id="editImageDropContainer" style="margin-bottom:10px;">
+                <button type="button" class="btn-browse-img" onclick="document.getElementById('editFileInput').click()">📁 Browse</button>
+                <input type="file" id="editFileInput" accept="image/*" style="display:none;" onchange="handleFilePicked(event, 'edit')">
+                <input type="text" id="editPostImageUrl" placeholder="Or drag image file here / paste image URL..." class="image-drop-input" oninput="handleUrlTyped('edit')">
+            </div>
+
+            <div class="image-preview-badge" id="editPreviewBadge">
+                <img src="" alt="Thumbnail" class="preview-thumb-img" id="editPreviewImg">
+                <div class="preview-meta-info">
+                    <span class="preview-filename" id="editPreviewName">Selected Image</span>
+                    <button type="button" class="btn-remove-thumb" onclick="removeAttachedImage('edit')">✕ Remove Image</button>
+                </div>
+            </div>
+
+            <label style="font-size:0.74rem; color:var(--text-muted); display:block; margin-bottom:4px;">Reference Link (optional)</label>
+            <input type="url" id="editPostLinkUrl" placeholder="https://ccc.edu.ph/schedule" class="text-input">
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
+                <button class="btn-nav" onclick="closeEditModal()">Cancel</button>
+                <button class="btn-action" onclick="submitEditPost()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Duty-Bearer Resolution Action Modal -->
+    <div id="actionModal" class="modal-overlay">
+        <div class="modal-card" style="width: min(90%, 460px);">
+            <h3 style="color: var(--text-heading); margin-bottom: 6px;">Post Official Resolution</h3>
+            <p style="color: var(--text-muted); font-size: 0.82rem; margin-bottom: 12px;">Let the student body know how their feedback is being addressed.</p>
+            
+            <input type="hidden" id="actionPostId">
+            <label style="font-size:0.74rem; color:var(--text-muted); display:block; margin-bottom:4px;">Update Status</label>
+            <select id="actionStatusSelect" class="select-input">
+                <option value="Under Review">🟡 Under Review / Investigating</option>
+                <option value="Action Taken">🟢 Action Taken / Resolved</option>
+            </select>
+
+            <label style="font-size:0.74rem; color:var(--text-muted); display:block; margin-bottom:4px;">Resolution Note (Action Taken)</label>
+            <textarea id="actionNoteText" class="textarea-input" placeholder="e.g., General Services replaced the projector in Lab 2..."></textarea>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="btn-nav" onclick="closeActionModal()">Cancel</button>
+                <button class="btn-action" onclick="submitDutyAction()">Publish Resolution</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SURVEY BUILDER MODAL -->
+    <div id="createFormModal" class="modal-overlay">
+        <div class="modal-card">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 8px; flex-wrap: wrap;">
+                <div>
+                    <h3 id="surveyModalTitle" style="color:var(--text-heading); margin-bottom: 4px; font-size: 1.2rem;">Create a New Survey</h3>
+                    <p id="surveyModalSub" style="color:var(--text-muted); font-size:0.82rem;">Build targeted multi-format evaluations with ratings, choice prompts, and narrative inquiries for your peers.</p>
+                </div>
+                <button type="button" class="btn-nav" onclick="openStudentPreview()" style="color:var(--txt-blue); border-color:rgba(59,130,246,0.4);">
+                    👁️ Preview Survey
+                </button>
+            </div>
+
+            <label style="font-size:0.74rem; color:var(--text-muted); display:block; margin-bottom:4px;">Survey Title</label>
+            <input type="text" id="newFormTitle" placeholder="e.g., Midterm Lecture Pacing & Lab Survey" class="text-input">
+
+            <label style="font-size:0.74rem; color:var(--text-muted); display:block; margin-bottom:4px;">Community Purpose & Context</label>
+            <textarea id="newFormDesc" placeholder="Explain the importance of this evaluation for fellow students..." class="textarea-input" style="height:50px;"></textarea>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                <div>
+                    <label style="font-size:0.74rem; color:var(--text-muted); display:block; margin-bottom:4px;">Subject Code (optional)</label>
+                    <input type="text" id="newFormSubject" placeholder="e.g., CS 311 / ITEC 22" class="text-input" style="margin-bottom:0;">
+                </div>
+                <div>
+                    <label style="font-size:0.74rem; color:var(--text-muted); display:block; margin-bottom:4px;">Target Students / Section</label>
+                    <input type="text" id="newFormSection" placeholder="e.g., BSCS 3A or ALL" class="text-input" style="margin-bottom:0;" value="ALL">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 8px; margin-bottom: 8px;">
+                <div>
+                    <label style="font-size:0.74rem; color:var(--text-muted); display:block; margin-bottom:4px;">Deadline Cutoff (Date & Time)</label>
+                    <div class="deadline-picker-box">
+                        <button type="button" class="btn-browse-img" onclick="triggerCalendarPicker()" title="Select date from calendar">
+                            📅 Pick Date
+                        </button>
+                        <input type="date" id="pickerDatePart" class="deadline-date-input" onchange="handleDateSelected(this.value)">
+                        
+                        <button type="button" class="btn-browse-img" onclick="triggerClockPicker()" title="Select cutoff time" style="margin-left:auto; background:rgba(37,99,235,0.15); border-color:rgba(59,130,246,0.35); color:var(--txt-blue);">
+                            ⏰ Pick Time
+                        </button>
+                        <input type="time" id="pickerTimePart" class="deadline-date-input" value="23:59" onchange="syncDeadlineValue()">
+                    </div>
+                    <input type="hidden" id="newFormDeadline">
+                    
+                    <div id="deadlineFormattedBadge" style="display:none; align-items:center; gap:6px; margin-top:5px; font-size:0.74rem; color:var(--txt-gold);">
+                        <span>🗓️ <strong id="deadlineFormattedText">Due Date Set</strong></span>
+                        <button type="button" onclick="clearDeadlineSelection()" style="background:none; border:none; color:var(--txt-red); cursor:pointer; font-weight:bold; font-size:0.72rem;">✕ Clear</button>
+                    </div>
+                </div>
+
+                <div>
+                    <label style="font-size:0.74rem; color:var(--text-muted); display:block; margin-bottom:4px;">Response Quota (0 = Unlimited)</label>
+                    <input type="number" id="newFormMax" min="0" placeholder="0" class="text-input" style="margin-bottom:0;" value="0">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+                <div>
+                    <label style="font-size:0.74rem; color:var(--text-muted); display:block; margin-bottom:4px;">Focus Category</label>
+                    <select id="newFormCategory" class="select-input" style="margin-bottom:0;">
+                        <option value="Classroom Feedback">Course Pedagogy & Lecture</option>
+                        <option value="Facilities Grievance">Laboratory & Classroom</option>
+                        <option value="Community Initiative">Campus Event / Org Activity</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size:0.74rem; color:var(--text-muted); display:block; margin-bottom:4px;">Academic Year</label>
+                    <select id="newFormYear" class="select-input" style="margin-bottom:0;">
+                        {% for yr in available_years %}
+                        <option value="{{ yr }}">{{ yr }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size:0.74rem; color:var(--text-muted); display:block; margin-bottom:4px;">Semester</label>
+                    <select id="newFormSem" class="select-input" style="margin-bottom:0;">
+                        <option value="1st Semester">1st Semester</option>
+                        <option value="2nd Semester">2nd Semester</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="border-top: 1px dashed var(--border-subtle); margin: 12px 0;"></div>
+
+            <details class="theme-panel" id="themePanel">
+                <summary>🎨 Customize look <span class="theme-summary-hint" id="themeSummaryHint">Default look</span></summary>
+                <div class="theme-grid">
+                    <div class="theme-field"><label>Theme colour</label><div class="swatch-row" id="accentSwatches"></div></div>
+                    <div class="theme-field"><label>Background colour</label><div class="swatch-row" id="bgSwatches"></div></div>
+                    <div class="theme-field">
+                        <label>Header</label>
+                        <div id="headerPresets"></div>
+                        <div class="header-actions">
+                            <button type="button" class="btn-nav" onclick="document.getElementById('headerImageInput').click()" style="font-size:0.72rem;">🖼️ Upload picture</button>
+                            <button type="button" class="btn-nav" id="headerRemoveBtn" onclick="removeHeaderImage()" style="font-size:0.72rem; display:none; color:var(--txt-red);">✕ Remove picture</button>
+                            <input type="file" id="headerImageInput" accept="image/png,image/jpeg,image/webp" hidden onchange="onHeaderImagePicked(this)">
+                        </div>
+                    </div>
+                    <div class="theme-field">
+                        <label for="themeFont">Font style</label>
+                        <select id="themeFont" class="select-input" style="margin-bottom:0;" onchange="onThemeFontChange(this.value)">
+                            <option value="sans">Clean (default)</option>
+                            <option value="serif">Classic serif</option>
+                            <option value="rounded">Friendly rounded</option>
+                        </select>
+                    </div>
+                    <div class="theme-preview" id="themePreview">
+                        <div class="tp-banner" id="themePreviewBanner"></div>
+                        <div class="tp-body">
+                            <div class="tp-title" id="themePreviewTitle">Your survey title</div>
+                            <div class="tp-q">How satisfied are you with this initiative?</div>
+                            <span class="tp-btn">Submit Feedback</span>
+                        </div>
+                    </div>
+                </div>
+            </details>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px; flex-wrap:wrap; gap:6px;">
+                <span style="font-size:0.86rem; font-weight:700; color:var(--text-heading);">Survey Inquiries List</span>
+                <div id="questionToolbar" style="display:flex; gap:5px;">
+                    <button type="button" class="btn-nav" onclick="addQuestionItem('narrative')" style="font-size:0.7rem; color:var(--txt-blue);">+ Open Text</button>
+                    <button type="button" class="btn-nav" onclick="addQuestionItem('likert')" style="font-size:0.7rem; color:var(--txt-gold);">+ Likert (1-5)</button>
+                    <button type="button" class="btn-nav" onclick="addQuestionItem('radio')" style="font-size:0.7rem; color:var(--txt-green);">+ Choice</button>
+                    <button type="button" class="btn-nav" onclick="addQuestionItem('checkbox')" style="font-size:0.7rem; color:var(--txt-violet);">+ Checkboxes</button>
+                </div>
+            </div>
+
+            <div id="questionsLockedNotice" class="sv-locked-notice" style="display:none;"></div>
+            <div id="questionsBuilderContainer"></div>
+
+            <div id="formBuilderWarnings" class="form-warning-banner"></div>
+
+            <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;">
+                <button class="btn-nav" onclick="closeCreateFormModal()">Cancel</button>
+                <button class="btn-action" id="surveySubmitBtn" onclick="submitCreateForm()">Publish Survey</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PREVIEW AS STUDENT MODAL -->
+    <div id="previewFormModal" class="modal-overlay">
+        <div class="modal-card" id="previewFormCard">
+            <div class="form-banner" id="previewFormBanner" style="display:none;"></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <span class="post-cat-badge" style="background: rgba(37,99,235,0.2); color:var(--txt-blue);">Student Experience Preview</span>
+                <button type="button" class="btn-nav" onclick="closeStudentPreview()" style="font-size:0.74rem;">✕ Close Preview</button>
+            </div>
+            <h3 style="color:var(--text-heading); margin: 4px 0;" id="prevTitle">Preview Title</h3>
+            <p style="color:var(--text-muted); font-size:0.82rem; margin-bottom: 8px;" id="prevDesc"></p>
+            <div style="font-size:0.72rem; color:var(--text-muted); margin-bottom:10px;" id="prevMetaLine"></div>
+
+            <div class="anonymity-banner" style="margin-bottom: 14px;">
+                🛡️ 100% Anonymous: Student identities are permanently disconnected from responses.
+            </div>
+
+            <div id="previewQuestionsRender"></div>
+
+            <div style="text-align: right; margin-top: 18px;">
+                <button class="btn-action" onclick="closeStudentPreview()">Return to Builder</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- STUDENT FORM FILLING MODAL -->
+    <div id="fillFormModal" class="modal-overlay">
+        <div class="modal-card" id="fillFormModalCard">
+            <div class="form-banner" id="fillFormBanner" style="display:none;"></div>
+            <span class="post-cat-badge" id="fillModalCategory">Community Initiative</span>
+            <h3 style="color:var(--text-heading); margin: 4px 0;" id="fillModalTitle">Form Title</h3>
+            <p style="color:var(--text-muted); font-size:0.82rem; margin-bottom: 6px;" id="fillModalDesc"></p>
+            <div style="font-size:0.72rem; color:var(--text-muted); margin-bottom:10px;" id="fillModalMeta"></div>
+
+            <div class="anonymity-banner" style="margin-bottom: 12px;">
+                🛡️ 100% Anonymous: Your identity is permanently disconnected from this narrative.
+            </div>
+
+            <div id="fillQuestionsList"></div>
+
+            <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px;">
+                <button class="btn-nav" onclick="closeFillFormModal()">Cancel</button>
+                <button class="btn-action" onclick="submitAnswers()">Submit Feedback</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AUTHOR PRIVATE SURVEY ANALYTICS MODAL -->
+    <div id="surveyAnalyticsModal" class="modal-overlay">
+        <div class="modal-card">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; gap:8px; flex-wrap:wrap;">
+                <div>
+                    <span class="post-cat-badge" style="background: rgba(16,185,129,0.15); color:var(--txt-green);">Survey Results</span>
+                    <h3 style="color:var(--text-heading); margin: 4px 0; font-size:1.2rem;" id="analyticsModalTitle">Survey Title</h3>
+                    <p style="font-size: 0.78rem; color:var(--text-muted);">
+                        Cohort: <strong id="analyticsModalCohort" style="color:var(--txt-soft);">ALL</strong> &bull; Total Submissions: <strong id="analyticsTotalCount" style="color:var(--txt-blue); font-size:0.92rem;">0</strong>
+                    </p>
+                </div>
+                <button class="btn-nav" id="btnExportSurveyCsv" style="color:var(--txt-blue); border-color:rgba(59,130,246,0.4);">📥 Export Survey CSV</button>
+            </div>
+
+            <div id="analyticsQuestionsList" style="display:flex; flex-direction:column; gap:12px; margin-top:8px;"></div>
+
+            <div style="text-align: right; margin-top: 18px;">
+                <button class="btn-nav" onclick="closeSurveyAnalyticsModal()">Close Analytics</button>
+            </div>
+        </div>
+    </div>
+
+    <header class="topbar">
+        <div class="brand-unit">
+            <button class="btn-menu-drawer" onclick="toggleMobileDrawer()" title="Open Navigation Menu">
+                ☰
+            </button>
+            <img src="{{ url_for('static', filename='ccclogo.png') }}" alt="CCC Logo" class="brand-logo-img">
+            <div class="brand-text-block">
+                <div class="brand-title">Student Community Portal</div>
+                <div class="brand-subtitle">City College of Calamba</div>
+            </div>
+        </div>
+        <div class="nav-actions">
+            <span class="role-badge">{{ role }}</span>
+            <span class="user-name-display">{{ username }}</span>
+            <button type="button" id="tourBtn" class="btn-nav btn-tour" onclick="CCCTour.start()" title="Take a guided tour of the portal" aria-label="Take a guided tour">❓ <span class="btn-label">Tour</span></button>
+            <button type="button" id="themeToggle" class="btn-nav theme-toggle" onclick="toggleTheme()" aria-label="Switch to light mode" aria-pressed="false" title="Switch to light mode">&#9728;&#65039;</button>
+            <button class="btn-nav btn-logout" onclick="openLogoutModal()">Sign Out</button>
+        </div>
+    </header>
+
+    <main class="workspace">
+        <section class="welcome-card">
+            <div>
+                <div class="welcome-title">Student Voice & Feedback Collective, {{ username }}</div>
+                <div class="welcome-sub">
+                    Department of <strong>{{ department }}</strong> ({{ program }}). 
+                    Your feedback is analyzed by our AI engine to support peer representation and institutional action.
+                </div>
+            </div>
+            {% if 'officer' in role.lower() or 'representative' in role.lower() or 'rep' in role.lower() or 'faculty' in role.lower() or 'misd' in role.lower() %}
+            <button class="btn-action" id="createSurveyBtn" onclick="openCreateFormModal()">+ Create Formal Survey</button>
+            {% endif %}
+        </section>
+
+        <!-- Department Community Pulse -->
+        <section class="community-pulse-card" id="pulseSectionTarget">
+            <div class="pulse-header">
+                <div>
+                    <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--text-heading); letter-spacing: -0.01em;">Department Community Pulse</h3>
+                    <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 1px;">Aggregated student sentiment across {{ department }}</p>
+                </div>
+                <span class="pulse-tag">
+                    <span class="pulse-radar-dot"></span>
+                    Live Voice Tally
+                </span>
+            </div>
+
+            <div class="pulse-stats-grid">
+                <div class="pulse-stat-box">
+                    <div class="pulse-stat-num" id="pulseTotalVoices">0</div>
+                    <div class="pulse-stat-lbl">Voices Recorded</div>
+                </div>
+                <div class="pulse-stat-box">
+                    <div class="pulse-stat-num" style="color: var(--badge-pos);" id="pulsePosPercent">0%</div>
+                    <div class="pulse-stat-lbl">Commendation</div>
+                </div>
+                <div class="pulse-stat-box">
+                    <div class="pulse-stat-num" style="color: var(--badge-neg);" id="pulseNegPercent">0%</div>
+                    <div class="pulse-stat-lbl">Grievances</div>
+                </div>
+                <div class="pulse-stat-box">
+                    <div class="pulse-stat-num" style="color: var(--accent-gold);" id="pulseActiveForms">0</div>
+                    <div class="pulse-stat-lbl">Active Surveys</div>
+                </div>
+            </div>
+
+            <div class="pulse-meter-container">
+                <div class="pulse-meter-segment" id="meterPos" style="width: 0%; background: linear-gradient(90deg, #059669, #10b981);" title="Positive"></div>
+                <div class="pulse-meter-segment" id="meterNeu" style="width: 0%; background: linear-gradient(90deg, #d97706, #f59e0b);" title="Neutral"></div>
+                <div class="pulse-meter-segment" id="meterNeg" style="width: 0%; background: linear-gradient(90deg, #e11d48, #f43f5e);" title="Negative"></div>
+            </div>
+            
+            <div class="pulse-legend-grid">
+                <div class="legend-item">🟢 Commendations (<span id="txtPos">0</span>)</div>
+                <div class="legend-item">🟡 Neutral (<span id="txtNeu">0</span>)</div>
+                <div class="legend-item">🔴 Grievances (<span id="txtNeg">0</span>)</div>
+            </div>
+        </section>
+
+        <!-- 2-COLUMN DASHBOARD GRID -->
+        <div class="portal-layout-grid">
+            
+            <!-- LEFT COMMAND SIDEBAR -->
+            <aside class="portal-sidebar" id="portalSidebar">
+                
+                <!-- MOBILE-ONLY HEADER LOCKUP -->
+                <div class="sidebar-brand-header">
+                    <div class="sidebar-brand-content">
+                        <img src="{{ url_for('static', filename='ccclogo.png') }}" alt="CCC Logo" class="sidebar-brand-logo">
+                        <div>
+                            <div class="sidebar-brand-title">Student Community Portal</div>
+                            <div class="sidebar-brand-subtitle">City College of Calamba</div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-nav" onclick="closeMobileDrawer()" style="padding: 4px 8px; font-size: 0.75rem;">✕</button>
+                </div>
+
+                <div>
+                    <div class="sidebar-section-title">Navigation Views</div>
+                    <div class="sidebar-nav-stack">
+                        <button class="sidebar-nav-btn active" id="tabTownHall" onclick="switchPortalTab('townhall')">
+                            <span>🏛</span>
+                            <span>Town Hall Forum</span>
+                        </button>
+                        <button class="sidebar-nav-btn" id="tabSurveys" onclick="switchPortalTab('surveys')">
+                            <span>📋</span>
+                            <span>Formal Surveys</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Channels Directory -->
+                <div id="sidebarChannelsSection">
+                    <div class="sidebar-section-title">Community Channels</div>
+                    <div class="sidebar-nav-stack">
+                        <button class="sidebar-nav-btn channel-chip active" onclick="switchChannel('ALL', this)">
+                            <span>🏛️</span>
+                            <span>Campus-Wide</span>
+                        </button>
+                        <button class="sidebar-nav-btn channel-chip" style="color:var(--txt-gold);" onclick="switchChannel('ANNOUNCEMENTS', this)">
+                            <span>📣</span>
+                            <span>Announcements</span>
+                        </button>
+                        <button class="sidebar-nav-btn channel-chip" onclick="switchChannel('DCI', this)">
+                            <span>💻</span>
+                            <span>DCI Channel</span>
+                        </button>
+                        <!-- Other departments removed to lock scope to DCI -->
+                    </div>
+                </div>
+
+                <div class="sidebar-privacy-box">
+                    <div class="sidebar-privacy-title">🛡️ Student Shield</div>
+                    <p class="sidebar-privacy-desc">
+                        Your submissions are 100% anonymous and evaluated strictly by our AI engine.
+                    </p>
+                </div>
+            </aside>
+
+            <!-- RIGHT MAIN CONTENT PANE -->
+            <div class="portal-main-pane">
+                
+                <!-- SECTION 1: TOWN HALL & CHANNELS -->
+                <div id="sectionTownHall">
+                    <div class="announcements-readonly-banner" id="announcementsReadBanner">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                            <span style="font-size: 1.15rem;">📣</span>
+                            <strong style="color: var(--txt-gold); font-size: 0.92rem;">Official Campus Events & Announcements</strong>
+                        </div>
+                        <p style="font-size: 0.8rem; color: var(--text-body); margin: 0; line-height: 1.5;">
+                            Broadcasts are authored exclusively by verified Student Officers, Class Representatives, and Faculty. You can review updates, vote to demonstrate consensus, and join discussions in the comments below.
+                        </p>
+                    </div>
+
+                    <div class="townhall-compose-card" id="townhallComposeCard">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 8px; flex-wrap: wrap;">
+                            <strong style="color: var(--text-heading); font-size: 0.94rem;">
+                                Participatory Feed: <span id="currentChannelLabel" style="color:var(--txt-blue);">Campus-Wide</span>
+                            </strong>
+                            <div class="anonymity-banner" id="composeAnonymityBadge">🛡️ 100% Anonymous Voice</div>
+                        </div>
+
+                        {% if 'officer' in role.lower() or 'representative' in role.lower() or 'rep' in role.lower() or 'faculty' in role.lower() or 'misd' in role.lower() %}
+                        <div style="margin-bottom: 10px; background: rgba(245, 158, 11, 0.08); border: 1px dashed rgba(245, 158, 11, 0.35); padding: 7px 10px; border-radius: 8px; display: flex; align-items: center; gap: 8px;" id="announcementCheckboxContainer">
+                            <input type="checkbox" id="townIsAnnouncement" onchange="toggleAnnouncementMode(this.checked)" style="accent-color: #f59e0b; width: 16px; height: 16px; cursor: pointer;">
+                            <label for="townIsAnnouncement" style="font-size: 0.78rem; font-weight: 700; color: var(--txt-gold); cursor: pointer;">
+                                📌 Broadcast as Official Campus Event / Announcement
+                            </label>
+                        </div>
+
+                        <!-- Upgraded Announcement Expiration Picker for COMPOSE -->
+                        <div id="expirationContainer" style="display:none; margin-bottom: 12px; background: rgba(245, 158, 11, 0.08); border: 1px dashed rgba(245, 158, 11, 0.35); padding: 10px; border-radius: 8px;">
+                            <label style="font-size:0.74rem; color:var(--txt-gold); font-weight:700; display:block; margin-bottom:4px;">Announcement Expiration Date (optional)</label>
+                            <p style="font-size:0.7rem; color:var(--text-muted); margin-bottom:8px;">If set, this announcement will automatically disappear from the feed after this date.</p>
+                            
+                            <div class="deadline-picker-box">
+                                <button type="button" class="btn-browse-img" onclick="triggerTownCalendarPicker()" title="Select date from calendar">
+                                    📅 Pick Date
+                                </button>
+                                <input type="date" id="townPickerDatePart" class="deadline-date-input" onchange="handleTownDateSelected(this.value)">
+                                
+                                <button type="button" class="btn-browse-img" onclick="triggerTownClockPicker()" title="Select cutoff time" style="margin-left:auto; background:rgba(37,99,235,0.15); border-color:rgba(59,130,246,0.35); color:var(--txt-blue);">
+                                    ⏰ Pick Time
+                                </button>
+                                <input type="time" id="townPickerTimePart" class="deadline-date-input" value="23:59" onchange="syncTownDeadlineValue()">
+                            </div>
+                            <input type="hidden" id="townExpirationDate">
+                            
+                            <div id="townDeadlineFormattedBadge" style="display:none; align-items:center; gap:6px; margin-top:5px; font-size:0.74rem; color:var(--txt-gold);">
+                                <span>🗓️ <strong id="townDeadlineFormattedText">Expiration Set</strong></span>
+                                <button type="button" onclick="clearTownDeadlineSelection()" style="background:none; border:none; color:var(--txt-red); cursor:pointer; font-weight:bold; font-size:0.72rem;">✕ Clear</button>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 12px;" id="composerNoticeText">
+                            Share feedback or report an issue. Peers can upvote (Agree) or downvote (Disagree) to reflect collective community consensus.
+                        </p>
+
+                        <div class="compose-main-grid">
+                            <select id="townTargetChannel" class="select-input" style="margin-bottom:0;">
+                                <option value="ALL">Post to: Campus-Wide (All)</option>
+                                {% if 'officer' in role.lower() or 'representative' in role.lower() or 'rep' in role.lower() or 'faculty' in role.lower() or 'misd' in role.lower() %}
+                                <option value="ANNOUNCEMENTS">Post to: Official Announcements</option>
+                                {% endif %}
+                                <option value="DCI">Post to: DCI Channel</option>
+                            </select>
+
+                            <select id="townCategory" class="select-input" style="margin-bottom:0;">
+                                <option value="Campus Facilities & Infrastructure">Facilities & Laboratory</option>
+                                <option value="Campus Events & Traditions">Sportsfest / Alay Lakad / Events</option>
+                                <option value="Instructional Delivery & Pedagogy">Instructional Delivery & Pacing</option>
+                                <option value="Faculty Demeanor & Approachability">Faculty Approachability & Welfare</option>
+                                <option value="General Academic Feedback">General Campus Life</option>
+                            </select>
+
+                            <input type="text" id="townContent" placeholder="Describe the announcement, issue, or feedback..." class="text-input" style="margin-bottom:0;">
+                        </div>
+
+                        <div class="compose-media-grid">
+                            <div class="image-drop-container" id="townImageDropContainer">
+                                <button type="button" class="btn-browse-img" onclick="document.getElementById('townFileInput').click()" title="Click to browse folder or drag image here">
+                                    📁 Browse
+                                </button>
+                                <input type="file" id="townFileInput" accept="image/*" style="display:none;" onchange="handleFilePicked(event, 'town')">
+                                <input type="text" id="townImageUrl" placeholder="Or drag image file here / paste image URL..." class="image-drop-input" oninput="handleUrlTyped('town')">
+                            </div>
+
+                            <input type="url" id="townLinkUrl" placeholder="🔗 Resource Link (optional): https://ccc.edu.ph/..." class="text-input" style="margin-bottom:0; font-size:0.78rem;">
+                        </div>
+
+                        <div class="image-preview-badge" id="townPreviewBadge">
+                            <img src="" alt="Thumbnail" class="preview-thumb-img" id="townPreviewImg">
+                            <div class="preview-meta-info">
+                                <span class="preview-filename" id="townPreviewName">Attached Image</span>
+                                <button type="button" class="btn-remove-thumb" onclick="removeAttachedImage('town')">✕ Remove Image</button>
+                            </div>
+                        </div>
+
+                        <!-- TOGGLEABLE STUDENT AI SENTIMENT INSPECTION FEATURE -->
+                        <div style="margin-top: 10px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; background: rgba(37, 99, 235, 0.08); border: 1px solid rgba(59, 130, 246, 0.25); padding: 8px 12px; border-radius: var(--radius-sm);">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 1rem;">🔬</span>
+                                <div>
+                                    <label for="inspectAiToggle" style="font-size: 0.8rem; font-weight: 700; color: var(--txt-blue); cursor: pointer;">Preview AI Analysis</label>
+                                    <div style="font-size: 0.7rem; color: var(--text-muted);">See how the AI understands your text before posting</div>
+                                </div>
+                            </div>
+                            <input type="checkbox" id="inspectAiToggle" style="width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer;">
+                        </div>
+
+                        <div style="text-align: right;">
+                            <button class="btn-action" id="btnSubmitPost" onclick="submitTownHallPost()">📢 Submit to Community Channel</button>
+                        </div>
+                    </div>
+
+                    <!-- Phase 3 Update: Town Hall Feed Search Bar -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                        <h4 style="color:var(--text-heading); font-size:0.95rem;">Recent Community Posts</h4>
+                        <div class="search-input-box" style="max-width: 320px;">
+                            <span class="search-icon">🔍</span>
+                            <input type="text" id="feedSearchInput" placeholder="Search discussions..." oninput="onFeedSearch(this.value)">
+                        </div>
+                    </div>
+
+                    <div class="townhall-feed" id="townhallFeedContainer"></div>
+                </div>
+
+                <!-- SECTION 2: FORMAL SURVEY EVALUATIONS -->
+                <div id="sectionSurveys" style="display: none;">
+                    <div class="surveys-overview-header">
+                        <div>
+                            <div class="surveys-overview-title">Formal Surveys</div>
+                            <div class="surveys-overview-sub">Structured evaluations analyzed by our sentiment engine to surface actionable feedback.</div>
+                        </div>
+                        {% if 'officer' in role.lower() or 'representative' in role.lower() or 'rep' in role.lower() or 'faculty' in role.lower() or 'misd' in role.lower() %}
+                        <button class="btn-nav" id="btnToggleAuthored" onclick="toggleAuthoredSurveys()" style="color:var(--txt-gold); border-color:rgba(245,158,11,0.4);">
+                            🧾 View Surveys Initiated by You
+                        </button>
+                        {% endif %}
+                    </div>
+
+                    <div id="paneStudentSurveys">
+                        <!-- Phase 2: Form Classification Tabs -->
+                        <div class="survey-subtabs" id="surveyCategoryTabs">
+                            <button class="survey-subtab-btn active" onclick="setFormTab('Available', this)">🗳️ Available</button>
+                            <button class="survey-subtab-btn" onclick="setFormTab('Due Today', this)">⚠️ Due Today</button>
+                            <button class="survey-subtab-btn" onclick="setFormTab('Missed', this)">❌ Missed</button>
+                            <button class="survey-subtab-btn" onclick="setFormTab('Completed', this)">✅ Completed</button>
+                        </div>
+
+                        <!-- Phase 2: Live Search Bar for Forms -->
+                        <div class="search-input-box" style="margin-bottom: 20px; max-width: 100%;">
+                            <span class="search-icon">🔍</span>
+                            <input type="text" id="formSearchInput" placeholder="Search surveys by title or description..." oninput="onFormSearch(this.value)">
+                        </div>
+
+                        <div id="availableFormsContainer" class="forms-grid"></div>
+                    </div>
+                    
+                    {% if 'officer' in role.lower() or 'representative' in role.lower() or 'rep' in role.lower() or 'faculty' in role.lower() or 'misd' in role.lower() %}
+                    <div id="paneMySurveys" style="display:none;">
+                        <div class="my-surveys-head">
+                            <button class="btn-nav" onclick="toggleAuthoredSurveys()">❮ Back to Student Surveys</button>
+                            <div class="my-surveys-title"><h3>Surveys You Created</h3><span id="myFormsSummary"></span></div>
+                        </div>
+                        <div class="my-surveys-toolbar">
+                            <div class="search-input-box my-surveys-search">
+                                <span class="search-icon">🔍</span>
+                                <input type="text" id="myFormsSearch" placeholder="Search your surveys by title, description, section or subject..." aria-label="Search your surveys" oninput="onMyFormsSearch(this.value)">
+                            </div>
+                            <select id="myFormsSort" class="select-input my-surveys-sort" aria-label="Sort your surveys" onchange="onMyFormsSort(this.value)">
+                                <option value="newest">Newest first</option>
+                                <option value="responses">Most responses</option>
+                                <option value="closing">Closing soonest</option>
+                                <option value="az">Title A to Z</option>
+                            </select>
+                        </div>
+                        <div class="my-surveys-chips" id="myFormsChips">
+                            <button type="button" class="mf-chip active" data-status="all" onclick="setMyFormsStatus('all')">All <b id="mfCountAll">0</b></button>
+                            <button type="button" class="mf-chip" data-status="open" onclick="setMyFormsStatus('open')">Open <b id="mfCountOpen">0</b></button>
+                            <button type="button" class="mf-chip" data-status="closed" onclick="setMyFormsStatus('closed')">Closed <b id="mfCountClosed">0</b></button>
+                        </div>
+                        <div id="myFormsContainer" class="forms-grid"></div>
+                    </div>
+                    {% endif %}
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- AI INSPECTION PREVIEW MODAL -->
+    <div id="aiInspectionModal" class="modal-overlay">
+        <div class="modal-card" style="width: min(90%, 520px);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <span class="post-cat-badge" style="background:rgba(37,99,235,0.2); color:var(--txt-blue);">🔬 AI Sentiment Check</span>
+                <button type="button" class="btn-nav" onclick="closeAiInspectionModal()" style="font-size:0.75rem;">✕ Close</button>
+            </div>
+            <h3 style="color:var(--text-heading); margin-bottom: 6px; font-size:1.1rem;">How the AI understands your text</h3>
+            <p style="color:var(--text-muted); font-size:0.78rem; margin-bottom: 14px;">This is how the system categorizes your feedback before it reaches the community feed.</p>
+
+            <div style="background: rgba(6,12,26,0.7); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:14px; margin-bottom:14px;">
+                <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:4px;">Your Feedback:</div>
+                <div id="inspectTextCorpus" style="font-size:0.88rem; color:var(--text-heading); font-style:italic; line-height:1.4;">"..."</div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;">
+                <div style="background: rgba(6,12,26,0.7); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:12px; text-align:center;">
+                    <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Overall Sentiment</div>
+                    <div id="inspectSentimentVal" style="font-size:1.15rem; font-weight:900; margin-top:4px; color:var(--txt-green-strong);">Positive</div>
+                </div>
+                <div style="background: rgba(6,12,26,0.7); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:12px; text-align:center;">
+                    <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Model Confidence</div>
+                    <div id="inspectConfidenceVal" style="font-size:1.15rem; font-weight:900; margin-top:4px; color:var(--txt-blue);">94.5%</div>
+                </div>
+            </div>
+
+            <div style="background: rgba(6,12,26,0.7); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:12px; margin-bottom:16px;">
+                <div style="font-size:0.75rem; color:var(--txt-blue); font-weight:700; margin-bottom:6px;">Category & Emotion Breakdown:</div>
+                <div id="inspectAspectClauses" style="font-size:0.8rem; color:var(--txt-soft); display:flex; flex-direction:column; gap:6px; max-height:140px; overflow-y:auto;"></div>
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="btn-nav" onclick="closeAiInspectionModal()">Cancel & Edit</button>
+                <button class="btn-action" onclick="confirmAndPublishPost()">Confirm & Publish Post</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JINJA VARIABLE INJECTION -->
+    <!-- This securely passes the backend variables into the global window object so the external JS can read them -->
+    <script>
+        window.APP_USER_ROLE = {{ role | tojson | safe }};
+        window.APP_USER_DEPT = {{ department | tojson | safe }};
+        window.APP_USERNAME = {{ username | tojson | safe }};
+        window.APP_TOUR_SEEN = {{ tour_seen | tojson }};
+    </script>
+    
+    <!-- EXTERNAL JAVASCRIPT -->
+    <script src="{{ asset_url('tour.js') }}"></script>
+    <script src="{{ asset_url('student_portal.js') }}"></script>
+
+</body>
+</html>
