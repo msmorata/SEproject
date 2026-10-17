@@ -1,0 +1,15 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+Flask==3.1.0
+Flask-SQLAlchemy==3.1.1
+Flask-Login==0.6.3
+Flask-WTF==1.2.1
+Flask-Limiter==3.8.0
+SQLAlchemy==2.0.29
+Werkzeug==3.0.2
+psycopg2-binary==2.9.9
+transformers==4.40.0
+torch==2.2.2
+matplotlib==3.8.4
+gunicorn==22.0.0
+email-validator==2.1.1
+click==8.1.7

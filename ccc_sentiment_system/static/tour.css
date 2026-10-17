@@ -1,0 +1,75 @@
+/* Guided tour (works in dark and light mode across desktop, tablet, and mobile screens) */
+.ccc-tour { display: none; position: fixed; inset: 0; z-index: 19000; pointer-events: none; font-family: inherit; }
+.ccc-tour-shade { position: fixed; inset: 0; background: rgba(2, 6, 15, 0.74); opacity: 0; transition: opacity 0.25s ease; pointer-events: none; }
+.ccc-tour-ring { position: fixed; left: 0; top: 0; width: 0; height: 0; border-radius: 14px; box-shadow: 0 0 0 9999px rgba(2, 6, 15, 0.74), 0 0 0 3px #3b82f6, 0 0 28px 6px rgba(59, 130, 246, 0.55); opacity: 0; transition: left 0.28s cubic-bezier(0.22, 1, 0.36, 1), top 0.28s cubic-bezier(0.22, 1, 0.36, 1), width 0.28s cubic-bezier(0.22, 1, 0.36, 1), height 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease; pointer-events: none; }
+.ccc-tour-card { position: fixed; width: min(390px, calc(100vw - 24px)); max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px); overflow-y: auto; box-sizing: border-box; padding: 18px 20px 16px; border-radius: 16px; pointer-events: auto; background: #0f1a30; color: #cbd5e1; border: 1px solid rgba(96, 165, 250, 0.48); border-top: 4px solid #3b82f6; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65); touch-action: pan-y; }
+.ccc-tour-card.ccc-tour-in { animation: cccTourIn 0.26s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+@keyframes cccTourIn { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
+
+.ccc-tour-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+.ccc-tour-step { font-size: 0.68rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: #60a5fa; }
+.ccc-tour-close { background: transparent; border: none; color: #94a3b8; font-size: 0.9rem; font-weight: 700; cursor: pointer; padding: 4px 6px; border-radius: 6px; line-height: 1; }
+.ccc-tour-close:hover { color: #f8fafc; background: rgba(255, 255, 255, 0.08); }
+
+.ccc-tour-title { margin: 0 0 8px; font-size: 1.1rem; font-weight: 800; color: #f8fafc; line-height: 1.3; }
+.ccc-tour-body { margin: 0; font-size: 0.88rem; line-height: 1.58; color: #cbd5e1; }
+.ccc-tour-body strong { color: #f8fafc; }
+.ccc-tour-dots { display: flex; gap: 5px; margin: 13px 0 11px; flex-wrap: wrap; }
+.ccc-tour-dots i { width: 7px; height: 7px; border-radius: 50%; background: rgba(148, 163, 184, 0.35); transition: all 0.2s ease; }
+.ccc-tour-dots i.done { background: rgba(96, 165, 250, 0.7); }
+.ccc-tour-dots i.on { background: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3); transform: scale(1.15); }
+.ccc-tour-actions { display: flex; align-items: center; gap: 8px; }
+.ccc-tour-spacer { flex: 1; }
+.ccc-tour-skip { background: none; border: 0; color: #94a3b8; font: inherit; font-size: 0.78rem; font-weight: 600; cursor: pointer; padding: 8px 4px; text-decoration: underline; text-underline-offset: 3px; touch-action: manipulation; }
+.ccc-tour-skip:hover { color: #e2e8f0; }
+.ccc-tour-btn { border-radius: 10px; font: inherit; font-size: 0.84rem; font-weight: 700; padding: 9px 16px; cursor: pointer; border: 1px solid rgba(148, 163, 184, 0.4); background: transparent; color: #e2e8f0; transition: transform 0.12s ease, filter 0.15s ease, background 0.15s ease; touch-action: manipulation; }
+.ccc-tour-btn:hover { background: rgba(148, 163, 184, 0.12); }
+.ccc-tour-btn:active { transform: scale(0.97); }
+.ccc-tour-btn:focus-visible, .ccc-tour-skip:focus-visible, .ccc-tour-close:focus-visible { outline: 2px solid #60a5fa; outline-offset: 2px; }
+.ccc-tour-next { background: linear-gradient(135deg, #3b82f6, #2563eb); border-color: transparent; color: #fff; }
+.ccc-tour-next:hover { background: linear-gradient(135deg, #3b82f6, #2563eb); filter: brightness(1.1); }
+
+/* first-time question */
+.ccc-tour-welcome { position: fixed; inset: 0; z-index: 19000; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(2, 6, 15, 0.74); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); animation: cccWelFade 0.25s ease backwards; }
+@keyframes cccWelFade { from { opacity: 0; } to { opacity: 1; } }
+.ccc-tour-wcard { width: min(420px, 100%); box-sizing: border-box; text-align: center; padding: 26px 24px 20px; border-radius: 18px; background: #0f1a30; color: #cbd5e1; border: 1px solid rgba(96, 165, 250, 0.45); border-top: 5px solid #3b82f6; box-shadow: 0 30px 70px rgba(0, 0, 0, 0.65); animation: cccTourIn 0.3s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+.ccc-tour-wemoji { font-size: 2.1rem; margin-bottom: 6px; }
+.ccc-tour-wcard h3 { margin: 0 0 8px; font-size: 1.2rem; font-weight: 800; color: #f8fafc; overflow-wrap: anywhere; }
+.ccc-tour-wcard p { margin: 0 0 8px; font-size: 0.9rem; line-height: 1.55; }
+.ccc-tour-wnote { font-size: 0.78rem !important; color: #94a3b8; }
+.ccc-tour-wactions { display: flex; gap: 10px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
+.ccc-tour-wactions .ccc-tour-btn { flex: 1 1 135px; padding: 11px 16px; }
+
+/* Mobile-specific refinements */
+@media (max-width: 640px) {
+    .ccc-tour-card {
+        padding: 15px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+        border-radius: 16px;
+        max-height: 52vh;
+        max-height: 52dvh;
+    }
+    .ccc-tour-card.ccc-tour-mobile-top {
+        padding-bottom: 14px;
+    }
+    .ccc-tour-title { font-size: 1.02rem; margin-bottom: 6px; }
+    .ccc-tour-body { font-size: 0.83rem; line-height: 1.5; }
+    .ccc-tour-dots { margin: 10px 0; }
+    .ccc-tour-btn { min-height: 42px; padding: 8px 14px; font-size: 0.82rem; }
+    .ccc-tour-skip { min-height: 40px; font-size: 0.76rem; }
+}
+
+/* light mode */
+html[data-theme="light"] .ccc-tour-card, html[data-theme="light"] .ccc-tour-wcard { background: #ffffff; color: #475569; box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28); }
+html[data-theme="light"] .ccc-tour-title, html[data-theme="light"] .ccc-tour-wcard h3, html[data-theme="light"] .ccc-tour-body strong { color: #0f172a; }
+html[data-theme="light"] .ccc-tour-body { color: #475569; }
+html[data-theme="light"] .ccc-tour-step { color: #2563eb; }
+html[data-theme="light"] .ccc-tour-wnote, html[data-theme="light"] .ccc-tour-skip, html[data-theme="light"] .ccc-tour-close { color: #64748b; }
+html[data-theme="light"] .ccc-tour-skip:hover, html[data-theme="light"] .ccc-tour-close:hover { color: #0f172a; background: rgba(15, 23, 42, 0.06); }
+html[data-theme="light"] .ccc-tour-btn { color: #334155; border-color: rgba(15, 23, 42, 0.25); }
+html[data-theme="light"] .ccc-tour-btn:hover { background: rgba(15, 23, 42, 0.05); }
+html[data-theme="light"] .ccc-tour-next { color: #fff; border-color: transparent; }
+html[data-theme="light"] .ccc-tour-dots i { background: rgba(15, 23, 42, 0.18); }
+html[data-theme="light"] .ccc-tour-dots i.done { background: rgba(37, 99, 235, 0.6); }
+html[data-theme="light"] .ccc-tour-dots i.on { background: #2563eb; }
+
+@media (prefers-reduced-motion: reduce) { .ccc-tour-ring, .ccc-tour-shade { transition: none; } .ccc-tour-card.ccc-tour-in, .ccc-tour-wcard, .ccc-tour-welcome { animation: none; } }

@@ -1,0 +1,39 @@
+services:
+  - type: web
+    name: ccc-dci-sentiment-system
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --workers 1 --threads 4 --timeout 120 --bind 0.0.0.0:$PORT
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: FLASK_ENV
+        value: production
+      - key: LOW_MEMORY_MODE
+        value: "1"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ccc-sentiment-db
+          property: connectionString
+      - key: MISD_USERNAME
+        value: misd_admin
+      - key: MISD_EMAIL
+        value: misd@ccc.edu.ph
+      - key: MISD_PASSWORD
+        sync: false
+      - key: MAIL_SENDER
+        value: sentimentanalysissystem@gmail.com
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: HF_API_TOKEN
+        sync: false
+
+databases:
+  - name: ccc-sentiment-db
+    plan: free
+    databaseName: ccc_sentiment
+    user: ccc_admin
